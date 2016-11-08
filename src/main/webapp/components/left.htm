@@ -1,0 +1,34 @@
+	    <div class="left_col scroll-view">
+          <div class="navbar nav_title" style="border: 0;">
+            <a href="#" onClick="portal.showComponent('dash');" class="site_title"><span><img height="55px" width="auto" src="/images/emp-logo-sm.png" alt="employmeo"></span></a>
+          </div>
+          <div class="clearfix"></div>
+          <br>
+          <!-- sidebar menu -->
+          <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+            <div class="menu_section">
+              <ul class="nav side-menu">
+                <li class="active"><a href="#" onClick="portal.showComponent('dash');"><i class="fa fa-tachometer"></i> Dashboard</a>
+                </li>
+                <li><a><i class="fa fa-users"></i> Candidates <span class="fa fa-chevron-down"></span></a>
+                  <ul class="nav child_menu" style="display: block;">
+                    <li><a href="#" onClick="portal.showComponent('invite_applicant');">Send Assessment</a></li>
+                    <li><a href="#" onClick="portal.showComponent('completed_applications');">Candidate Search</a></li>
+                    <li><a href="#" onClick="portal.showComponent('respondant_score');">Candidate Results</a></li>                    
+                  </ul>
+                <li><a href="#" onClick="portal.showComponent('positions');"><i class="fa fa-briefcase"></i> Positions</a></li>
+                  <li><a href="#" onClick="portal.showComponent('assessments');"><i class="fa fa-edit"></i> Assessments</a>
+                  </li>
+                  <li><a><i class="fa fa-gears"></i> Administration <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu" style="display: none;">
+						<li><a href="#" onClick="portal.showComponent('data_admin');">User Administration</a></li>
+						<li><a href="#" onClick="portal.showComponent('data_admin');">Payroll Administration</a></li>
+						<li><a href="#" onClick="portal.showComponent('survey_admin');">Survey Administration</a></li>
+						<li><a href="#" onClick="portal.showComponent('data_admin');">My Account</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <!-- /sidebar menu -->
+          </div>

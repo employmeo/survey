@@ -1,0 +1,496 @@
+/**
+ * 1.0Survey panel details
+ * ----------------------------------------------------------------------------
+ */
+
+ 
+.surveyheader h3 {
+		font-size: 18px;
+}
+
+@media (max-width: 332px) {
+	.surveyheader h3 {
+		font-size: 6vw;
+	}
+	.surveyheader i {
+		display: none;
+	}
+}
+
+.surveyheader .progress {
+	margin-top: 18px;
+	margin-bottom: 10px;
+}
+
+.qpanel {
+  position: relative;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  max-height:100%;
+  overflow: hidden;
+  display: block;
+  border-radius: 0 !important;
+}
+  
+.qpanel-default {
+	border-color: #ebedef !important;
+	background-size: cover;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	height: 100%;
+}
+
+.qpanel .qpanel-body { padding: 0 !important; overflow: hidden; height: auto; z-index: 1; max-width: 100%; max-height: 100%;}
+.qpanel .qpanel-body a { overflow: hidden; }
+
+.qpanel .qpanel-header, .qpanel .qpanel-body, .qpanel .qpanel-footer  { 
+	padding: 8px !important;
+	position: fixed;
+	width: 100%;
+	color: #000000;
+	background-color: #FFFFFF;
+	z-index: 2;
+	opacity: 0.75; -moz-opacity: 0.75; -webkit-opacity: 0.75; filter: alpha(opacity=85); -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=85)";
+}	
+.qpanel .qpanel-header h4, .qpanel .qpanel-body h4, .qpanel .qpanel-footer h4 { display: inline; font-family: Verdana,Arial,sans-serif; font-size: 30px; color: #34495e margin: 0 !important; padding: 0 !important; }
+.qpanel .qpanel-header div, .qpanel .qpanel-body div, .qpanel .qpanel-footer div { display: inline; font-family: Verdana,Arial,sans-serif; font-size: 36px; color: #34495e; text-align: center; background-color: transparent !important; border: none !important; }	
+.qpanel .qpanel-header { top: 0; }
+.qpanel .qpanel-body { top: auto; bottom: auto; }
+.qpanel .qpanel-footer { 
+	bottom: 18px;
+    border-radius: 10px;
+    width: auto;
+    left: 20px;
+    right: 20px; }
+.row .legend {font-size:18px;}
+
+.questionpage {
+	overflow-y: inherit;
+}
+
+.questionpage hr {
+	margin-top: 5px;
+	margin-bottom: 20px;
+}
+.questiontext {
+	font-family: Verdana,Arial,sans-serif;
+	font-size: 16px;
+	margin-bottom: 10px;
+	color: #34495e;
+}
+.questiontext p {
+    font-family: Verdana, Arial, FontAwesome;
+    text-align: left;
+    padding-left: 1.0em;
+    text-indent: -1.5em;
+}
+.questiontext p:before  {
+	content: attr(qnum) ". ";
+	text-align: right;
+}
+
+/**
+ * 2.0 Stars
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.stars {
+  align: center;
+  display: block;
+}
+input.star { display: none; }
+label.star {
+  font-family: FontAwesome;
+  padding: 10px;
+  font-size: 36px;
+  color: #444;
+  transition: all .2s;
+}
+input.star:checked ~ label.star:before {
+  content: '\f005';
+  color: #FD4;
+  transition: all .25s;
+}
+input.star-5:checked ~ label.star:before {
+  color: #FE7;
+  text-shadow: 0 0 20px #952;
+}
+input.star-1:checked ~ label.star:before { color: #0080ff; }
+label.star:hover { transform: rotate(-15deg) scale(1.3); }
+label.star:before {
+  content: '\f006';
+  font-family: FontAwesome;
+}
+/**
+ * 2.1 Likert Boxes
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.likertboxes {
+  align: center;
+  display: inline;
+}
+
+div.likertboxes ul
+{
+margin: 0;
+padding: 0;
+list-style-type: none;
+}
+div.likertboxes ul li
+{
+  display: inline-block;
+  width: 19%;
+  font-size: 10px;
+  text-align: center;
+}
+
+input.likertbox { display: none; }
+label.likertbox {
+  font-family: FontAwesome;
+  font-size: 36px;
+  transition: all .2s;
+}
+label.likertbox:before {
+  content: '\f096';
+  color: #2e6da4;
+  font-family: FontAwesome;
+  -webkit-text-stroke-width: 2px;
+}
+input.likertbox:checked  + label.likertbox:before {
+  content: '\f0c8';  
+  transition: all .25s;
+}
+label.likertbox:hover { 
+	transform: scale(1.3);
+ }
+
+/***
+input.likertbox-1:checked  + label.likertbox-1:before {
+  color: #ff0000;
+}
+label.likertbox-1 {
+  -webkit-text-stroke-color: #ff0000;
+}
+input.likertbox-2:checked  + label.likertbox-2:before {
+  color: #ff8000;
+}
+label.likertbox-2 {
+  -webkit-text-stroke-color: #ff8000;
+}
+input.likertbox-3:checked  + label.likertbox-3:before {
+  color: #ffff00;
+}
+label.likertbox-3 {
+  -webkit-text-stroke-color: #ffff00;
+}
+input.likertbox-4:checked  + label.likertbox-4:before {
+  color: #80ff80;
+}
+label.likertbox-4 {
+  -webkit-text-stroke-color: #80ff80;
+}
+input.likertbox-5:checked  + label.likertbox-5:before {
+  color: #00ff00;
+}
+label.likertbox-5 {
+  -webkit-text-stroke-color: #00ff00;
+}
+*/
+
+/**
+ * 3.0 Thumbs up/down
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.thumbs {
+  width: 100%;
+  display: block;
+}
+input.thumbs-up, input.thumbs-down, input.check-square { display: none; }
+label.thumbs-up, label.thumbs-down, label.check-square {
+  font-family: Verdana,FontAwesome;
+  padding: 8px;
+  font-size: 18px;
+  color: #444;
+  transition: all .2s;
+}
+
+label.thumbs-up:before { content: '\f087'; padding-right: 10px; }
+input.thumbs-up:checked+label.thumbs-up:before { content: '\f164'; padding-right: 10px; color: #0080ff;}
+
+label.thumbs-down:before { content: '\f088'; padding-right: 10px; }
+input.thumbs-down:checked+label.thumbs-down:before { content: '\f165'; padding-right: 10px; color: #0080ff;}
+input.thumbs-up:checked+label.thumbs-up, input.thumbs-down:checked+label.thumbs-down { color: #0080ff;}
+
+/**
+ * 3.1 yesno
+ * ----------------------------------------------------------------------------
+ */
+
+.yesnoleft, .yesnoright, .yesnocenter {
+}
+
+.yesnocenter {
+	border: #AAAAAA;
+    border-style: none;
+    border-width: 1px;
+	border-right-style: solid;
+	border-left-style: solid;
+}
+
+input.yesbox, input.nobox, input.sometimesbox, input.unknownbox { display: none; }
+label.yesbox, label.nobox, label.sometimesbox, label.unknownbox {
+  padding-top: 3px;
+  font-family: Verdana,FontAwesome;
+  text-align: center;
+  display: block;
+  width: 100%;
+  font-size: 30px;
+  color: #444;
+  transition: all .2s;
+}
+
+input.yesbox:checked+label.yesbox { color: green;}
+input.nobox:checked+label.nobox { color: red; }
+input.sometimesbox:checked+label.sometimesbox { color: blue;}
+input.unknownbox:checked+label.unknownbox { color: blue;}
+
+/**
+ * 3.5 Likert Scale
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.likert {
+  align: center;
+  display: block;
+}
+input.likert { display: none; }
+label.likert {
+  font-family: FontAwesome;
+  padding: 10px;
+  font-size: 36px;
+  color: #444;
+  transition: all .2s;
+}
+label.likert-1:before, label.likert-2:before {
+  content: '\f119';
+  font-family: FontAwesome;
+}
+label.likert-3:before {
+  content: '\f11a';
+  font-family: FontAwesome;
+}
+label.likert-4:before, label.likert-5:before {
+  content: '\f118';
+  font-family: FontAwesome;
+}
+
+input.likert-1:checked ~ label.likert-1:before,
+input.likert-2:checked ~ label.likert-2:before,
+input.likert-3:checked ~ label.likert-3:before,
+input.likert-4:checked ~ label.likert-4:before,
+input.likert-5:checked ~ label.likert-5:before {
+  color: #0080ff;
+  transition: all .25s;
+}
+
+
+
+/**
+ * 4.0 Checkboxes & radios
+ * ----------------------------------------------------------------------------
+ */
+.qpanel div.checkboxes {
+  	display: block;
+  	width: 100%;
+}
+label.check-square:before { content: '\f096'; padding-right: 10px; }
+input.check-square:checked+label.check-square:before { content: '\f046'; padding-right: 10px; }
+
+/**
+ * 4.1 Multichoice (radios)
+ * ----------------------------------------------------------------------------
+ */
+input.radio-short, input.radio-select {
+	display: none;
+	position: absolute;	
+	clip: rect(0 0 0 0);	
+}
+
+label.radio-short, label.radio-select {
+	font-family: Arial, Verdana,FontAwesome;
+	font-size: 12px;
+	padding: 6px;
+	transition: all .2s;
+	display: block;
+	border: solid;
+	border-width: 1px;
+	border-color: #2e6da4;
+	border-radius: 2px;
+	color: #2e6da4;
+	font-weight: normal;
+	text-align: center;
+ 	cursor: pointer;
+ 	cursor: hand;
+}
+
+label.radio-short, label.radio-select {
+}
+
+
+label.radio-select {
+	font-family: Verdana, Arial, FontAwesome;
+	text-align: left;
+    padding-left: 2.0em;
+    text-indent: -1.5em;
+}
+
+label.radio-select:before { content: '\f10c'; padding-right: 10px; }
+input.radio-select:checked+label.radio-select:before { content: '\f192'; padding-right: 10px; }
+
+input.radio-short:checked+label.radio-short, 
+input.radio-select:checked+label.radio-select 
+{
+	background-color: #2e6da4;
+    color: white;
+}
+
+/**
+ * 4.5 List Ranking
+ * ----------------------------------------------------------------------------
+ */
+
+.instructions {
+	text-align: center;
+	display: block;
+	font-size: 75%;
+	text-transform: uppercase;	
+}
+
+ol.ranker, ul.ranker {
+	padding-left: 5px;
+}
+
+ol.ranker li::before {
+	color:black;
+	content: counter();
+}
+
+.ranker li {
+    cursor: pointer;
+	color: #2e6da4;
+    text-shadow: 0 1px 0 #fff;
+    background-image: -webkit-linear-gradient(top,#fff 0,#e0e0e0 100%);
+    background-image: -o-linear-gradient(top,#fff 0,#e0e0e0 100%);
+    background-image: -webkit-gradient(linear,left top,left bottom,from(#fff),to(#e0e0e0));
+    background-image: linear-gradient(to bottom,#fff 0,#e0e0e0 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe0e0e0', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+    background-repeat: repeat-x;
+    border-color: #dbdbdb;
+    border-color: #ccc;
+	width : 100%;
+	margin: 3px;
+    padding: 2px;
+    vertical-align:middle;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 2px;
+}
+
+.ranker li:hover,
+.ranker li:focus {
+	background-color: #e0e0e0;
+    background-position: 0 -15px;
+}
+
+.ranker li:active {
+	background-color: #e0e0e0;
+    border-color: #dbdbdb;
+    opacity: 0.5;
+}
+
+ul.ranker li {
+	display: block;
+}
+
+.ranker li span, .ranker li i {
+    margin: 2px;
+}
+
+form.unsubmitted li, form.submitted li {
+	color: #2e6da4;
+}
+
+.ranker-button {
+	font-family: Arial, Verdana,FontAwesome;
+	font-size: 12px;
+	padding: 6px;
+	transition: all .2s;
+	border: solid;
+    background: white;
+	border-width: 1px;
+	border-radius: 2px;
+	color: #808080;
+	text-align: center;
+	text-transform: uppercase;
+ 	cursor: pointer;
+ 	cursor: hand;	
+}
+
+.ranker-edited {
+	font-weight: bold;
+	color: #2e6da4;
+	border-color: #2e6da4;
+}
+
+.ranker-edited::before {
+    background-color: #FF0066;
+    border-radius: 3px 3px 3px 3px;
+    color: #FFFFFF;
+    content: "Click save when finished ordering \00BB";
+    font-size: 11px;
+    padding: 1px 3px 1px 3px;
+    left: 25px;
+    position: absolute;
+}
+
+.ranker-saved {
+	font-weight: bold;
+	color: white;
+	background: #29c329;
+	border-color: #1d921d;
+}
+
+.ranker-saved::after {
+    padding: 0px 0px 0px 2px;
+    content: "\f00c" ;
+}
+
+/**
+ * 4.5 Schedules
+ * ----------------------------------------------------------------------------
+ */
+.qpanel div.schedule {
+  	display: block;
+  	width: 100%;
+}
+input[type=checkbox].check-morning,
+input[type=checkbox].check-afternoon,
+input[type=checkbox].check-evening { display: none; }
+label.check-morning, label.check-afternoon, label.check-evening {
+  font-family: FontAwesome;
+  font-size: 24px;
+  transition: all .2s;
+}
+label.check-morning:before { content: '\f0f4'; }
+label.check-afternoon:before { content: '\f185'; }
+label.check-evening:before { content: '\f186'; }
+input.check-morning:checked+label.check-morning:before,
+input.check-afternoon:checked+label.check-afternoon:before ,
+input.check-evening:checked+label.check-evening:before { color: #0080ff;}
+

@@ -1,0 +1,205 @@
+/**
+ * 1.0 Cover Page
+ * ----------------------------------------------------------------------------
+ */
+
+body.coverpage {
+	background-size: cover;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+}
+
+
+/* 
+ * Custom Stuff
+ */
+
+.square  {
+    float:left;
+    position: relative;
+    width: 23%;
+    padding-bottom : 23%; /* = width for a 1:1 aspect ratio */
+    margin:1%;
+    opacity: 1;
+    overflow: hidden;
+    outline: 1px solid;
+}
+
+.profilesquare {
+	height: 30px;
+	width: 30px;
+	vertical-align:middle;
+	text-align: center;
+}
+			   					
+.profilesquare i {
+	margin: auto;
+	float: none;
+	font-size:17px;
+	line-height:28px;
+}
+
+.profilebadge {
+  float: left;
+  font-size:22px;
+  padding:3px;
+  -webkit-border-radius:100%;
+  -moz-border-radius:100%;
+  -o-border-radius:100%;
+  border-radius:100%;
+  border:2px solid #fff;
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.46);
+  text-align:center;
+  display:table-cell;
+  vertical-align:middle;
+  width:45px;
+  height:45px;
+  -moz-transition:.5s;
+  -webkit-transition:.5s;
+  -o-transition:.5s;
+  transition:.5s;	
+}
+
+.profilemini {
+  margin: auto;
+  font-size:13px;
+  padding:1px;
+  -webkit-border-radius:100%;
+  -moz-border-radius:100%;
+  -o-border-radius:100%;
+  border-radius:100%;
+  border:1px solid #fff;
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.46);
+  text-align:center;
+  vertical-align:middle;
+  width:22px;
+  height:22px;
+  -moz-transition:.5s;
+  -webkit-transition:.5s;
+  -o-transition:.5s;
+  transition:.5s;	
+}
+
+.scaleright, .scaleleft {
+  background: rgb(255,255,255);
+  font-weight: normal;
+  margin-top: 10px;
+  padding: 3px;
+}
+
+.scaleright {
+    background: -moz-linear-gradient(left, rgba(255,255,255,1) 0%, rgba(132,132,132,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(left, rgba(255,255,255,1) 0%,rgba(132,132,132,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to right, rgba(255,255,255,1) 0%,rgba(132,132,132,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#848484',GradientType=1 );
+	text-align: right;
+	right:25px;
+}
+.scaleleft {
+	text-align:left;
+	left:25px;
+}
+.scaleright:before, .scaleright:after {
+    width: 20px;
+    height: 70%;
+    position: absolute;
+    left: 100%;
+    content: "";
+}
+
+.scaleleft:before, .scaleleft:after {
+    width: 20px;
+    height: 70%;
+    position: absolute;
+    right: 100%;
+    content: "";
+}
+
+.scaleright:before {
+    top: -20%;
+    background: linear-gradient(to right top, #848484 50%, transparent 50%)
+}
+
+.scaleright:after {
+    top: 50%;
+    background: linear-gradient(to right bottom, #848484 50%, transparent 50%)
+}
+
+.scaleleft:before {
+    top: -20%;
+    background: linear-gradient(to left top, #FFF 50%, transparent 50%)
+}
+
+.scaleleft:after {
+    top: 50%;
+    background: linear-gradient(to left bottom, #FFF 50%, transparent 50%)
+}
+
+.selected {
+	outline: inset;
+}
+
+.squarecontent {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    padding: 5%;
+	
+}
+
+.squaretable {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+
+.squaretext {
+    width:100%;     
+	display: table-cell;
+    vertical-align: middle;
+    font-family: Comfortaa;
+    font-size: 1.3vw;
+    font-weight: bold;
+}
+
+.waiting {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+	font-size: 48px;
+    text-align: center;
+    z-index: 999;
+    background: black;
+    opacity: .5;
+    color: white;
+    margin-left: -17px;
+    margin-top: -12px;
+}
+
+.card-solid, .card-dashed {
+	border-width: 1px;
+	border-color: #ddd;
+	-webkit-box-shadow: 1px 1px 1px 1px rgba(170,170,170,1);
+	-moz-box-shadow: 1px 1px 1px 1px rgba(170,170,170,1);
+	box-shadow: 1px 1px 1px 1px rgba(170,170,170,1);
+}
+
+.card-solid {
+	border-style: solid;
+}
+
+.card-dashed {
+	border-style: dashed;
+}
+
+@media (max-width: 767px) {
+  .squaretext {
+    font-size: 6.5vw;
+  }
+}
+
+}

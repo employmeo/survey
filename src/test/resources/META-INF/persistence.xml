@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	<persistence-unit name="employmeo" transaction-type="RESOURCE_LOCAL">
+		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+		<class>com.employmeo.util.UuidConverter</class>
+		<class>com.employmeo.objects.Account</class>
+		<class>com.employmeo.objects.Answer</class>
+		<class>com.employmeo.objects.Person</class>
+		<class>com.employmeo.objects.Position</class>
+		<class>com.employmeo.objects.Question</class>
+		<class>com.employmeo.objects.Respondant</class>
+		<class>com.employmeo.objects.Response</class>
+		<class>com.employmeo.objects.SurveyQuestion</class>
+		<class>com.employmeo.objects.Survey</class>
+		<class>com.employmeo.objects.User</class>
+		<class>com.employmeo.objects.PayrollEntry</class>
+		<class>com.employmeo.objects.PayrollSummary</class>
+		<class>com.employmeo.objects.Corefactor</class>
+		<class>com.employmeo.objects.Location</class>
+		<class>com.employmeo.objects.AccountSurvey</class>
+		<class>com.employmeo.objects.PredictiveModel</class>
+		<class>com.employmeo.objects.RespondantScore</class>
+		<class>com.employmeo.objects.RespondantScorePK</class>
+		<class>com.employmeo.objects.PredictiveModelPK</class>
+		<class>com.employmeo.objects.Partner</class>
+		<class>com.employmeo.objects.BillingItem</class>
+		<class>com.employmeo.objects.CorefactorDescription</class>
+		<class>com.employmeo.objects.SurveySection</class>
+		<class>com.employmeo.objects.SurveySectionPK</class>
+     	<properties>
+			<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+         	<property name="eclipselink.connection-pool.default.initial" value="1"/>
+			<property name="eclipselink.connection-pool.node2.min" value="16"/>
+			<property name="eclipselink.connection-pool.node2.max" value="16"/>
+			<!--  debug logging properties, should enable on demand. -->
+			<!-- Level Configs: http://www.eclipse.org/eclipselink/documentation/2.5/jpa/extensions/p_logging_level.htm  -->
+<!-- 			
+			<property name="eclipselink.logging.level" value="FINE"/>
+			<property name="eclipselink.logging.level.sql" value="FINE"/>
+			<property name="eclipselink.logging.parameters" value="true"/>
+			<property name="eclipselink.logging.session" value="true"/>
+ -->			
+      	</properties>
+	</persistence-unit>
+</persistence>
