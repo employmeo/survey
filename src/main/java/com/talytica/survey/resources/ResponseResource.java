@@ -5,14 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response;
 
-import com.employmeo.data.model.Response;
 import com.employmeo.data.service.RespondantService;
 
 
@@ -22,9 +22,9 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 @Path("/1/response")
-@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@Api( value="/1/response", produces=MediaType.APPLICATION_JSON, consumes=MediaType.APPLICATION_FORM_URLENCODED)
+@Api( value="/1/response", produces=MediaType.APPLICATION_JSON, consumes=MediaType.APPLICATION_JSON)
 public class ResponseResource {
 	@Autowired
 	private RespondantService respondantService;
@@ -32,54 +32,31 @@ public class ResponseResource {
 	private static final Logger log = LoggerFactory.getLogger(ResponseResource.class);
 	
 	@POST
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@ApiOperation(value = "Saves a response object from form submission", response = Response.class)
+	@ApiOperation(value = "Saves a response object from form submission", response = com.employmeo.data.model.Response.class)
 	   @ApiResponses(value = {
 	     @ApiResponse(code = 200, message = "Response Created")
 	   })
-	public Response doPost(
-			@FormParam("response_respondant_id") Long respondantId, 
-			@FormParam("response_question_id") Long questionId,
-			@FormParam("response_value") int responseVal, 
-			@FormParam("response_text") String responseText) {
-
-		log.trace("Processing Respondant: " + respondantId + " Question: " + questionId);
-		
-		Response response = new Response();
-		response.setRespondantId(respondantId);
-		response.setQuestionId(questionId);
-		response.setResponseValue(responseVal);
-		response.setResponseText(responseText);
-
+	public Response saveResponse(com.employmeo.data.model.Response response) {
+		log.trace("Processing response {}", response);
 		respondantService.saveResponse(response);
-		return response;
+		
+		return Response.status(Status.CREATED).entity(response).build();
+
 	}
 
 	@PUT
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@ApiOperation(value = "Updates a response object from form submission", response = Response.class)
+	@ApiOperation(value = "Updates a response object from form submission", response = com.employmeo.data.model.Response.class)
 	   @ApiResponses(value = {
 	     @ApiResponse(code = 200, message = "Response Updated"),
 	     @ApiResponse(code = 404, message = "Response not found")
 	   })
-	public Response doPut(@FormParam("response_id") Long responseId,
-			@FormParam("response_respondant_id") Long respondantId,
-			@FormParam("response_question_id") Long questionId,
-			@FormParam("response_value") int responseVal,
-			@FormParam("response_text") String responseText) {
-
-		log.trace("Processing Respondant: " + respondantId + " Question: " + questionId);
-		
-		Response response = new Response();
-		response.setRespondantId(respondantId);
-		response.setQuestionId(questionId);
-		response.setResponseValue(responseVal);
-		response.setResponseText(responseText);
-		response.setId(responseId);
-			
+	public Response updateResponse(com.employmeo.data.model.Response response) {
+		log.trace("Processing response {}", response);
 		respondantService.saveResponse(response);
-		return response;
+		return Response.status(Status.CREATED).entity(response).build();
 	}
 }

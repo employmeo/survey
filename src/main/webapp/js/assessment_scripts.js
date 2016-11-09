@@ -15,6 +15,8 @@ var progress;
 var sections;
 var endAt;
 var timeinterval;
+var servicePath = '/survey/1/';
+
 
 (window.onpopstate = function () {
     var match,
@@ -28,48 +30,34 @@ var timeinterval;
        urlParams[decode(match[1])] = decode(match[2]);
 })();
 
-
-//
-// Rest Service Calls
-//
-
-function submitPlainAnswer(form, pagenum) {
-    $.ajax({
-           type: "POST",
-           async: true,
-           url: "/survey/response",
-           data: $(form).serialize(), 
-           success: function(data)
-           {
-              saveResponse(data);
-              isPageComplete(pagenum);
-           }
-         });
+function buildPlainSurveyWithRespondantId(uuId) {
+	$('#wait').removeClass('hidden');
+	getRespondant(uuId);
+    getRespondantSurvey(uuId);
 }
 
-function buildPlainSurveyWithRespondantId(uuId) {
-    $.ajax({
-        type: "POST",
-        async: true,
-        url: "/survey/getsurvey",
-        data: {
-        	"respondant_uuid" : uuId       	
-        },
-        beforeSend: function() {
-        	$('#wait').removeClass('hidden');
-        },
-        success: function(data)
-        {
-        	if (data.message != null) {
-        		showAssessmentNotAvailable(data);
-        	} else {
-                assemblePlainSurvey(data);        		
-        	}
-        },
-        complete: function() {
-        	$('#wait').addClass('hidden');
-        }
-      });
+function readyPage() {
+	if ((respondant != null) && (survey != null)) {
+		$('#wait').addClass('hidden');
+		var data = {};
+		assemblePlainSurvey();  		
+	} else if ((respondant == null) && (survey == null)) {
+		showAssessmentNotAvailable("Assessment not available for this ID");
+	}
+}
+
+
+function submitPlainAnswer(form, pagenum) {
+	var fields = $(form).serializeArray();
+	var response = {};
+	
+	for (var i=0;i<fields.length;i++) {
+		response[fields[i].name] = fields[i].value;
+	}
+	postResponse(response, function() {
+		isPageComplete(pagenum);
+
+	});
 }
 
 function getSurveyByPayrollId(form) {
@@ -114,19 +102,7 @@ function getPlainSurveyForNewRespondant(form) {
       });	
 }
 
-function submitSurvey() {
-	var redirect = respondant.respondant_redirect_url;
-    $.ajax({
-        type: "POST",
-        async: true,
-        url: "/survey/submitassessment",
-        data: {'respondant_id' : respondant.respondant_id},
-        success: function(data)
-        {
-            window.location.assign(redirect);
-        }
-      });	
-}
+
 
 // Pagination Code
 function nextPage() {
@@ -431,26 +407,23 @@ function buildLookupSurvey(accountId) {
 // Survey page building functions
 //
 
-function assemblePlainSurvey(data) {
-	collection = data;
+function assemblePlainSurvey() {
 	var deck = document.getElementById('wrapper');
-	respondant = collection.respondant;
-	survey = collection.survey;
-	sections = survey.sections.sort(function(a,b) {
-		return a.section_number < b.section_number ? -1:1;
+	sections = survey.survey.surveySections.sort(function(a,b) {
+		return a.sectionNumber < b.sectionNumber ? -1:1;
 	});
-	questions = survey.questions.sort(function(a,b) {
-		if (a.question_page == b.question_page) {
-			return a.question_sequence < b.question_sequence ? -1:1;
+	questions = survey.survey.surveyQuestions.sort(function(a,b) {
+		if (a.questionPage == b.questionPage) {
+			return a.questionSequence < b.questionSequence ? -1:1;
 		} else {
-			return a.question_page < b.question_page ? -1:1;
-		}});;
+			return a.questionPage < b.questionPage ? -1:1;
+	}});
 	
 	// Store Responses by Question ID
 	responses = new Array();
-	if (collection.responses != null) {
-		for (var i=0;i<collection.responses.length;i++) {
-			responses[collection.responses[i].response_question_id] = collection.responses[i];
+	if (respondant.responses != null) {
+		for (var i=0;i<respondant.responses.length;i++) {
+			responses[respondant.responses[i].response_question_id] = respondant.responses[i];
 		}
 	}
 	
@@ -485,14 +458,14 @@ function assemblePlainSurvey(data) {
 function createSurveySection(deck, section) {
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
 	pagination = new Array();
-	var qlimit = section.section_questions_per_page; // questions per page
+	var qlimit = section.questionsPerPage; // questions per page
 	totalpages = Math.ceil(section.qtotal / qlimit) + pagecount;
 	
 	var card = getInstructions(section, pagecount, totalpages);
 	card.appendTo(deck);
 	pagecount++;
 	
-	if (section.section_timed) {
+	if (section.timeSeconds > 0) {
 		updateTimer();
 	} else {
 		updateProgress();		
@@ -508,7 +481,7 @@ function createSurveySection(deck, section) {
 	
 	for (var q=0;q<questions.length;q++) {
 		var question = questions[q];
-		if (question.question_page == section.section_number) {
+		if (question.page == section.sectionNumber) {
 				qcount++;
 				if (qpp == qlimit) {
 					card.append(getSurveyNav(pagecount, totalpages, 5));	
@@ -535,11 +508,11 @@ function createSurveySection(deck, section) {
 	card.appendTo(deck);		
 	// Done with section questions, put in footer as "complete"
 	
-	if (collection.responses != null) {
-		for (var i=0;i<collection.responses.length;i++) {
-			saveResponse(collection.responses[i]);
-			var radios =$('form[name=question_'+collection.responses[i].response_question_id+
-    		'] :input[name=response_value][value=' + collection.responses[i].response_value + ']');
+	if (respondant.responses != null) {
+		for (var i=0;i<respondant.responses.length;i++) {
+			saveResponse(respondant.responses[i]);
+			var radios =$('form[name=question_'+respondant.responses[i].questionId+
+    		'] :input[name=responseValue][value=' + respondant.responses[i].responseValue + ']');
 		    $(radios).prop('checked', true);
 		}		
 	}
@@ -556,7 +529,7 @@ function getPreamble() {
 	preamble.append(getHrDiv());
 	preamble.append($('<div />', {
 		'class' : 'col-xs-12 col-sm-12 col-md-12',
-		}).html(survey.survey_preamble_text));
+		}).html(survey.preambleText));
 	preamble.append(getHrDiv());
 	preamble.append(getSurveyNav(1, null, 1));	
 	preamble.attr('page-type',0);
@@ -569,13 +542,13 @@ function getInstructions(section) {
 	
 	instr.append(getHrDiv());
 	instr.append($('<h4 />', {
-		'text' : 'Section ' + section.section_number + ' of ' + sections.length,
+		'text' : 'Section ' + section.sectionNumber + ' of ' + sections.length,
 		'class' : 'text-center'
 	}));
 	instr.append(getHrDiv());
 	instr.append($('<div />', {
 		'class' : 'col-xs-12 col-sm-12 col-md-12',
-		}).html(section.section_instructions));
+		}).html(section.instructions));
 	instr.append(getHrDiv());
 	instr.append(getSurveyNav(2, null, 2));	
 	instr.attr('page-type',1);
@@ -589,7 +562,7 @@ function getThankYouPage() {
 	thanks.append(getHrDiv());
 	thanks.append($('<div />', {
 		'class' : 'col-xs-12 col-sm-12 col-md-12',
-		}).html(survey.survey_thankyou_text));
+		}).html(survey.thankyouText));
 	thanks.append(getHrDiv());
 	thanks.append(getSurveyNav(null, null, 4));	
 
@@ -604,22 +577,22 @@ function getThankYouPage() {
 function getDisplayQuestion(question, qnum) {
 	var qtextdiv = $('<div />', {'class' : 'col-xs-12 col-sm-6 col-md-6 questiontext'})
 
-	if (question.question_type == 15) { //change display for alike / unlike
+	if (question.question.questionType == 15) { //change display for alike / unlike
 		qtextdiv.append($('<p />',{
 			'text' : 'Are these two Alike or Unlike',
 			'qnum' : qnum
 		}));
 		qtextdiv.append($('<div />', {
 			'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
-			'text' : question.answers[0].answer_text
+			'text' : question.question.answers[0].answerText
 				}));
 		qtextdiv.append($('<div />', {
 			'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
-			'text' : question.answers[1].answer_text
+			'text' : question.question.answers[1].answerText
 				}));
 	} else {
 		qtextdiv.append($('<p />',{
-			'html' : question.question_text,
+			'html' : question.question.questionText,
 			'qnum' : qnum
 		}));
 	}
@@ -630,32 +603,34 @@ function getDisplayQuestion(question, qnum) {
 function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	var ansblock = $('<div />', {'class' : 'col-xs-12 col-sm-6 col-md-6'});
 
-	question.answers.sort(function(a,b) {
-		return a.answer_display_id < b.answer_display_id ? -1:1;
+	question.question.answers.sort(function(a,b) {
+		return a.displayId < b.displayId ? -1:1;
 	});
 	
 	var form =  $('<form />', {
-		 'name' : 'question_'+question.question_id,
-		 'action' : "/response"
+		 'name' : 'question_'+question.question.questionId,
+		 'id' : 'question_'+question.question.questionId,
+		 'action' : servicePath + '/response',
+		 'method' : 'POST'
 	});
 	form.append($('<input/>', {
-		name : 'response_id',
+		name : 'id',
 		type : 'hidden',
-		id : 'qr'+question.question_id,
+		id : 'qr'+question.question.questionId,
 		value : ''
 	}));
 	form.append($('<input/>', {
-		name : 'response_respondant_id',
+		name : 'respondantId',
 		type : 'hidden',
-		value : respondant.respondant_id
+		value : respondant.id
 	}));
 	form.append($('<input/>', {
-		name : 'response_question_id',
+		name : 'questionId',
 		type : 'hidden',
-		value : question.question_id
+		value : question.question.questionId
 	}));
 
-	switch (question.question_type) {
+	switch (question.question.questionType) {
 	case 9: // five short ans
 	case 11: // two short ans
 	case 12: // four short ans
@@ -664,24 +639,24 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 10: // yes-notsure-no
 	case 13: // other, multi-three-choice
 		var ansdiv = $('<div />');
-		for (var ans=0;ans<question.answers.length;ans++) {
-			var answer = question.answers[ans];
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
 			var qrespdiv = $('<div />', {
 				'style' : 'padding-right: 1px; padding-left: 1px;',
 				'class' : 'col-xs-4 col-sm-4 col-md-4'
 			});
 			var radiobox = $('<input />', {
-				'id'   : 'radiobox-' + question.question_id +"-"+ answer.answer_value,
+				'id'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
 				'type' : 'radio',
 				'class' : 'radio-short',
-				'name' : 'response_value',
+				'name' : 'responseValue',
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value' :  answer.answer_value
+				'value' :  answer.answerValue
 			});
 			var radiolabel = $('<label />', {
-				'for'   : 'radiobox-' + question.question_id +"-"+ answer.answer_value,
+				'for'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-short',
-				'text'  :  answer.answer_text.toUpperCase()
+				'text'  :  answer.answerText.toUpperCase()
 			});
 		
 			qrespdiv.append(radiobox);
@@ -702,21 +677,21 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		});
 		var list = $('<ul />');
 		var labels = $('<ul />');
-		for (var ans=0;ans<question.answers.length;ans++) {
-			var answer = question.answers[ans];
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
 			var i = ans +1;
 			var scale = $('<li />');
 			scale.append($('<input/>',{
 				'class' : 'likertbox likertbox-' + i,
-				'id' : 'likertbox-' + i + '-' + question.question_id,
+				'id' : 'likertbox-' + i + '-' + question.question.questionId,
 				'type': 'radio',
-				'name': "response_value",
+				'name': "responseValue",
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value': answer.answer_value
+				'value': answer.answerValue
 			}));
 			scale.append($('<label/>',{
 				'class' : 'likertbox likertbox-' + i,
-				'for' : 'likertbox-' + i + '-' + question.question_id				
+				'for' : 'likertbox-' + i + '-' + question.question.questionId				
 			}));
 			list.append(scale);
 		}
@@ -732,10 +707,10 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		break;
 	case 14: // Rank
 		var responseInp = $('<input />', {
-			'id'   : 'ranker-' + question.question_id,
+			'id'   : 'ranker-' + question.question.questionId,
 			'type' : 'hidden',
 			'class' : 'hidden',
-			'name' : 'response_value',
+			'name' : 'responseValue',
 			'value' :  '12345'
 		});
 		form.append(responseInp);
@@ -745,27 +720,27 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'text' : 'Drag options to rank most preferred (1) to least (5)'
 		}));
 		var sortablelist = $('<ol />', {
-			'id' : 'sortable-' + question.question_id,
+			'id' : 'sortable-' + question.question.questionId,
 			'class' : 'ranker'});
-		for (var ans=0;ans<question.answers.length;ans++) {
-			var answer = question.answers[ans];
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
 			var listitem = $('<li />', {
-				'data-value' : answer.answer_value
+				'data-value' : answer.answerValue
 			});
-			var span = $('<span />', {'text' : answer.answer_text });
+			var span = $('<span />', {'text' : answer.answerText });
 			listitem.append($('<i />', {
 				'class' : 'fa fa-long-arrow-up pull-right',
-				'onClick': 'rankUp('+question.question_id+','+ answer.answer_value+')'
+				'onClick': 'rankUp('+question.question.questionId+','+ answer.answerValue+')'
 			}));
 			listitem.append($('<i />', {
 				'class' : 'fa fa-long-arrow-down pull-right',
-				'onClick': 'rankDown('+question.question_id+','+ answer.answer_value+')'
+				'onClick': 'rankDown('+question.question.questionId+','+ answer.answerValue+')'
 			}));
 			listitem.append(span);
 			sortablelist.append(listitem);
 		}
 		sortablelist.sortable({stop: 
-			function(event, ui){updateRankerIndexes(question.question_id);}});
+			function(event, ui){updateRankerIndexes(question.question.questionId);}});
 		
 		listdiv.append(sortablelist);
 
@@ -773,10 +748,10 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'class' : 'text-right'
 		}).append($('<button />', {
 				'type' : 'button',
-				'id' : 'saverank-' + question.question_id, 
+				'id' : 'saverank-' + question.question.questionId, 
 				'class' : 'ranker-button',
 				'text' : "Save",
-				'onClick':'submitRank(this.form,'+question.question_id+','+pagecount+');',
+				'onClick':'submitRank(this.form,'+question.question.questionId+','+pagecount+');',
 				'disabled' : true
 			})));
 		form.append(listdiv);
@@ -786,19 +761,19 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		var ansdiv = $('<div />');
 		var alikediv = $('<div />', {'class' : 'col-xs-6 col-sm-6 col-md-6'});
 		alikediv.append($('<input />', {
-			'id'   : 'radiobox-' + question.question_id +"-1",
-			'type' : 'radio', 'class' : 'radio-short', 'name' : 'response_value',
+			'id'   : 'radiobox-' + question.question.questionId +"-1",
+			'type' : 'radio', 'class' : 'radio-short', 'name' : 'responseValue',
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')', 'value' :  '1'}));
 		alikediv.append($('<label />', {
-			'for'   : 'radiobox-' + question.question_id +"-1", 'class' : 'radio-short',
+			'for'   : 'radiobox-' + question.question.questionId +"-1", 'class' : 'radio-short',
 			'text'  :  'ALIKE' }));
 		var unlikediv = $('<div />', {'class' : 'col-xs-6 col-sm-6 col-md-6'});
 		unlikediv.append($('<input />', {
-			'id'   : 'radiobox-' + question.question_id +"-2",
-			'type' : 'radio', 'class' : 'radio-short', 'name' : 'response_value',
+			'id'   : 'radiobox-' + question.question.questionId +"-2",
+			'type' : 'radio', 'class' : 'radio-short', 'name' : 'responseValue',
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')', 'value' :  '2'}));
 		unlikediv.append($('<label />', {
-			'for'   : 'radiobox-' + question.question_id +"-2", 'class' : 'radio-short',
+			'for'   : 'radiobox-' + question.question.questionId +"-2", 'class' : 'radio-short',
 			'text'  :  'UNLIKE' }));
 		ansdiv.append(alikediv);
 		ansdiv.append(unlikediv);
@@ -807,23 +782,23 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 6: // Multiple Choice (radio)
 	default:
 		// basic multichoice
-		for (var ans=0;ans<question.answers.length;ans++) {
-			var answer = question.answers[ans];
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
 			var qrespdiv = $('<div />', {
 				'class' : 'col-xs-12 col-sm-12 col-md-12'
 			});
 			var radiolabel = $('<label />', {
-				'for'   : 'radiobox-' + question.question_id +"-"+ answer.answer_value,
+				'for'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-select',
-				'text'  :  answer.answer_text
+				'text'  :  answer.answerText
 			});
 			var radiobox = $('<input />', {
-				'id'   : 'radiobox-' + question.question_id +"-"+ answer.answer_value,
+				'id'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
 				'type' : 'radio',
 				'class' : 'radio-select',
-				'name' : 'response_value',
+				'name' : 'responseValue',
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value' :  answer.answer_value
+				'value' :  answer.answerValue
 			});
 
 			form.append(radiobox);
@@ -972,11 +947,11 @@ function isSurveyComplete() {
 }
 
 function saveResponse(response) {
-	responses[response.response_question_id] = response;
-    var field = '#qr' + response.response_question_id;
-    $(field).val(response.response_id);
+	responses[response.questionId] = response;
+    var field = '#qr' + response.questionId;
+    $(field).val(response.id);
 
-    if (activeSection.section_all_required) {
+    if (activeSection.allRequired) {
     	updateProgress();
     }
     
@@ -986,8 +961,8 @@ function saveResponse(response) {
 function updateProgress() {
     var totalresponses = 0;
     for (var q in questions) { ques = questions[q]; 
-	    if (responses[ques.question_id] !=null) {
-	    	if (ques.question_page == activeSection.section_number) totalresponses++;
+	    if (responses[ques.question.questionId] !=null) {
+	    	if (ques.page == activeSection.sectionNumber) totalresponses++;
 	    }
     } 
     progress = 100* totalresponses / activeSection.qtotal;
@@ -997,7 +972,7 @@ function updateProgress() {
 }
 
 function startAssessment() {
-	if (activeSection.section_timed) {
+	if (activeSection.timeSeconds > 0) {
 		startTimer();
 		$('#startbutton').text('Continue');
 		$('#startbutton').attr('onClick','nextPage();');
@@ -1008,7 +983,7 @@ function startAssessment() {
 }
 
 function startTimer() {
-	var t = 1000 * activeSection.section_time_seconds;
+	var t = 1000 * activeSection.timeSeconds;
 	$('#timer').removeClass('hidden');
 
 	endAt = Date.parse(new Date()) + t;
@@ -1030,7 +1005,7 @@ function timesUp() {
 }
 
 function updateTimer(){
-	var t = 1000 * activeSection.section_time_seconds;
+	var t = 1000 * activeSection.timeSeconds;
 	if (endAt !=null) {
 	  t = endAt - Date.parse(new Date());
 	}
