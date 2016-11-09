@@ -28,7 +28,7 @@
 		<dbdeploy.db-driver>org.postgresql.Driver</dbdeploy.db-driver>
 		<dbdeploy.dbms>pgsql</dbdeploy.dbms>
 		<commons-math-version>3.6.1</commons-math-version>	
-		<persistence-unit.version>0.0.6-SNAPSHOT</persistence-unit.version>
+		<persistence-unit.version>0.0.7-SNAPSHOT</persistence-unit.version>
 		<swagger.version>1.5.9</swagger.version>
 	</properties>
 

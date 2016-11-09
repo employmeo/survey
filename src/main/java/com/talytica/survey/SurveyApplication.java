@@ -1,9 +1,7 @@
 package com.talytica.survey;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.autoconfigure.SpringBootApplication;;
 
 @SpringBootApplication(scanBasePackages = {"com.employmeo.data", "com.talytica.survey"})
 public class SurveyApplication {
