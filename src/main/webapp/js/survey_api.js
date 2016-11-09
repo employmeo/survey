@@ -97,7 +97,13 @@ function postResponse(response, cb) {
         type: "POST",
         async: true,
         url: servicePath + 'response',
-        data: response, 
+        data: JSON.stringify(response),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
         success: function(data)
         {
            saveResponse(data);

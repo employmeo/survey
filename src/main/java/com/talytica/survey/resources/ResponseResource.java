@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -21,6 +22,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+@PermitAll
 @Path("/1/response")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,6 +34,7 @@ public class ResponseResource {
 	private static final Logger log = LoggerFactory.getLogger(ResponseResource.class);
 	
 	@POST
+	@PermitAll
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Saves a response object from form submission", response = com.employmeo.data.model.Response.class)
@@ -47,6 +50,7 @@ public class ResponseResource {
 	}
 
 	@PUT
+	@PermitAll
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Updates a response object from form submission", response = com.employmeo.data.model.Response.class)
