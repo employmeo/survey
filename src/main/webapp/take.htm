@@ -82,19 +82,12 @@
     <div id='survey' style='max-width:900px;margin:0 auto' class='carousel slide' data-interval='false' data-wrap='false'>
       <div id='wrapper' class='carousel-inner'></div>
 	</div>
-<script>
-$(document).ready(function() {
-	if (urlParams.respondant_uuid != null) {
-	    buildPlainSurveyWithRespondantId(urlParams.respondant_uuid);
-	} else if (urlParams.account_id != null) {
-		buildLookupSurvey(urlParams.account_id);
-	} else {
-		var asid = urlParams.asid;
-		createPlainNewRespondant(asid);
-	}
-	$('#survey').on('swipeleft', function(e) {nextPage();});
-	$('#survey').on('swiperight', function(e) {prevPage();});
-	$('#survey').carousel('pause');
-});
-</script>
+	<script>
+	$(document).ready(function() {
+		$('#survey').on('swipeleft', function(e) {nextPage();});
+		$('#survey').on('swiperight', function(e) {prevPage();});
+		$('#survey').carousel('pause');
+		launchApp();
+	});
+	</script>
 </html>

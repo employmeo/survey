@@ -1,22 +1,19 @@
 //
 // Global Variables and actions for the survey page(s)
 //
-
 var urlParams;
-var collection;
 var respondant;
 var survey;
 var activeSection;
 var questions;
 var totalpages;
-var responses;
+var responses = new Array();
 var pagination;
 var progress;
 var sections;
 var endAt;
 var timeinterval;
 var servicePath = '/survey/1/';
-
 
 (window.onpopstate = function () {
     var match,
@@ -30,10 +27,27 @@ var servicePath = '/survey/1/';
        urlParams[decode(match[1])] = decode(match[2]);
 })();
 
-function buildPlainSurveyWithRespondantId(uuId) {
+function launchApp() {
 	$('#wait').removeClass('hidden');
-	getRespondant(uuId);
-    getRespondantSurvey(uuId);
+	if (urlParams.respondant_uuid != null) {
+		getRespondant(urlParams.respondant_uuid);
+	    getRespondantSurvey(urlParams.respondant_uuid);
+	} else if (urlParams.asid != null) {
+		getAccountSurvey(urlParams.asid);
+	} else {
+		var asid = urlParams.asid;
+		showError({"responseText" : "No ID Provided"});
+	}
+}
+
+function submitNewRespondant(form) {
+    var order = {};
+	var fields = $(form).serializeArray();
+	console.log(order);
+	for (var i=0;i<fields.length;i++) {
+		order[fields[i].name] = fields[i].value;
+	}
+	orderNewAssessment(order);	
 }
 
 function readyPage() {
@@ -41,68 +55,20 @@ function readyPage() {
 		$('#wait').addClass('hidden');
 		var data = {};
 		assemblePlainSurvey();  		
-	} else if ((respondant == null) && (survey == null)) {
-		showAssessmentNotAvailable("Assessment not available for this ID");
 	}
 }
-
 
 function submitPlainAnswer(form, pagenum) {
 	var fields = $(form).serializeArray();
 	var response = {};
-	
 	for (var i=0;i<fields.length;i++) {
 		response[fields[i].name] = fields[i].value;
 	}
-	postResponse(response, function() {
+	sendResponse(response, function(data) {
 		isPageComplete(pagenum);
-
+		saveResponse(data);
 	});
 }
-
-function getSurveyByPayrollId(form) {
-    $.ajax({
-        type: "POST",
-        async: true,
-        url: "/survey/getbypayrollid",
-        data: $(form).serialize(),
-        beforeSend: function() {
-        	$('#wait').removeClass('hidden');
-        },
-        success: function(data)
-        {
-        	if (data.message != null) {
-        		showIdNotFound(data);
-        	} else {
-                assemblePlainSurvey(data);        		
-        	}
-        },
-        complete: function() {
-        	$('#wait').addClass('hidden');
-        }
-      });	
-}
-
-function getPlainSurveyForNewRespondant(form) {
-    $.ajax({
-        type: "POST",
-        async: true,
-        url: "/survey/order",
-        data: $(form).serialize(),
-        beforeSend: function() {
-        	$('#wait').removeClass('hidden');
-        },
-        success: function(data)
-        {
-            assemblePlainSurvey(data);
-        },
-        complete: function() {
-        	$('#wait').addClass('hidden');
-        }
-      });	
-}
-
-
 
 // Pagination Code
 function nextPage() {
@@ -113,7 +79,7 @@ function nextPage() {
 		allowed = true;
 		break;
 	case "1": // Instructions
-		if (activeSection.section_timed) {
+		if (activeSection.timeSeconds > 0) {
 			allowed = (endAt != null);
 		} else {
 			$('#progress').removeClass('hidden');	
@@ -147,7 +113,7 @@ function isPageComplete(pagenum) {
 	var qlist = pagination[pagenum];
 	var complete = true;
 	for (var key in qlist ) {
-		if (responses[qlist[key].question_id] == null) complete = false;
+		if (responses[qlist[key].question.questionId] == null) complete = false;
 	}
 	if (complete) {
 		var button = '#nextbtn-' + pagenum;
@@ -159,13 +125,13 @@ function isPageComplete(pagenum) {
 function isSurveyComplete() {
 	var complete = true;
 	for (var key in questions ) {
-		if (responses[questions[key].question_id] == null) complete = false;
+		if (responses[questions[key].question.questionId] == null) complete = false;
 	}
 	return complete;
 }
 
 // Error Handling Functions
-function showAssessmentNotAvailable(data) {
+function showError(data) {
 	  // code to create a form to fill out for a new survey respondant	
 		var deck = document.getElementById('wrapper');
 		$(deck).empty();
@@ -176,12 +142,12 @@ function showAssessmentNotAvailable(data) {
 		card.append(getHrDiv());
 		card.append($('<div />', {
 			'class' : 'col-xs-12 col-sm-12 col-md-12',
-			}).append($('<h3 />', { 'class' : 'text-center', 'text' : data.message})));
+			}).append($('<h3 />', { 'class' : 'text-center', 'text' : data.responseText})));
 		card.append(getHrDiv());
 		card.appendTo(deck);
+		$('#wait').addClass('hidden');
 }
 
-//Error Handling Functions
 function showIdNotFound(data) {
 	  // code to create a form to fill out for a new survey respondant	
 		var deck = document.getElementById('wrapper');
@@ -207,7 +173,10 @@ function showIdNotFound(data) {
 		card.appendTo(deck);
 }
 
-function createPlainNewRespondant(surveyId, accountId) {
+// Code for building survey pages.
+function createNewRespondantForm() {
+	var surveyId
+	var accountId
   // code to create a form to fill out for a new survey respondant	
 	var deck = document.getElementById('wrapper');
 	$(deck).empty();
@@ -224,13 +193,8 @@ function createPlainNewRespondant(surveyId, accountId) {
 	});
 	form.append($('<input />', {
 		'type' : 'hidden',
-		'name' : 'account_id',
-		'value' : accountId
-	}));
-	form.append($('<input />', {
-		'type' : 'hidden',
-		'name' : 'survey_id',
-		'value' : surveyId		
+		'name' : 'asid',
+		'value' : survey.id
 	}));
 
 	/* First Name */
@@ -335,7 +299,7 @@ function createPlainNewRespondant(surveyId, accountId) {
 	form.append($('<button />', {
 		'type' : 'button',
 		'class' : 'btn btn-primary',
-		'onClick' : 'getPlainSurveyForNewRespondant(this.form);',
+		'onClick' : 'submitNewRespondant(this.form);',
 		'text' : 'Submit'
 	}));
 
@@ -346,6 +310,7 @@ function createPlainNewRespondant(surveyId, accountId) {
 	
 	$('#address').geocomplete({details:'form'});
 }
+
 
 // 
 function buildLookupSurvey(accountId) {
@@ -418,28 +383,20 @@ function assemblePlainSurvey() {
 		} else {
 			return a.questionPage < b.questionPage ? -1:1;
 	}});
-	
-	// Store Responses by Question ID
-	responses = new Array();
-	if (respondant.responses != null) {
-		for (var i=0;i<respondant.responses.length;i++) {
-			responses[respondant.responses[i].response_question_id] = respondant.responses[i];
-		}
-	}
-	
+		
 	activeSection = null;
 	// Analyze Sections to see if any are already finished
 	for (var key in sections) {
 		var section = sections[key];
 		section.qtotal = 0;
 		for (var q in questions) {
-			if (questions[q].question_page == section.section_number) section.qtotal++;
+			if (questions[q].page == section.sectionNumber) section.qtotal++;
 		}
 		section.complete = false;
 		if (section.section_all_required) {
-			section.complete = isAllReqSectionComplete(section.section_number);
+			section.complete = isAllReqSectionComplete(section.sectionNumber);
 		} else if (section.section_timed) {
-			section.complete = isTimedSectionStarted(section.section_number);
+			section.complete = isTimedSectionStarted(section.sectionNumber);
 		}
 		if ((activeSection == null) && (!section.complete)) activeSection = section;
 	}
@@ -508,12 +465,14 @@ function createSurveySection(deck, section) {
 	card.appendTo(deck);		
 	// Done with section questions, put in footer as "complete"
 	
-	if (respondant.responses != null) {
-		for (var i=0;i<respondant.responses.length;i++) {
-			saveResponse(respondant.responses[i]);
-			var radios =$('form[name=question_'+respondant.responses[i].questionId+
-    		'] :input[name=responseValue][value=' + respondant.responses[i].responseValue + ']');
-		    $(radios).prop('checked', true);
+	if (responses != null) {
+		for (var i=0;i<responses.length;i++) {
+			if (responses[i] != null) {
+			    saveResponse(responses[i]);
+			    var radios =$('form[name=question_'+responses[i].questionId+
+    		    '] :input[name=responseValue][value=' + responses[i].responseValue + ']');
+		        $(radios).prop('checked', true);
+			}
 		}		
 	}
 	for (var i=1;i<=totalpages;i++) {
@@ -608,15 +567,15 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	});
 	
 	var form =  $('<form />', {
-		 'name' : 'question_'+question.question.questionId,
-		 'id' : 'question_'+question.question.questionId,
+		 'name' : 'question_'+question.questionId,
+		 'id' : 'question_'+question.questionId,
 		 'action' : servicePath + '/response',
 		 'method' : 'POST'
 	});
 	form.append($('<input/>', {
 		name : 'id',
 		type : 'hidden',
-		id : 'qr'+question.question.questionId,
+		id : 'qr'+question.questionId,
 		value : ''
 	}));
 	form.append($('<input/>', {
@@ -627,7 +586,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	form.append($('<input/>', {
 		name : 'questionId',
 		type : 'hidden',
-		value : question.question.questionId
+		value : question.questionId
 	}));
 
 	switch (question.question.questionType) {
@@ -646,7 +605,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'class' : 'col-xs-4 col-sm-4 col-md-4'
 			});
 			var radiobox = $('<input />', {
-				'id'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
+				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'type' : 'radio',
 				'class' : 'radio-short',
 				'name' : 'responseValue',
@@ -654,7 +613,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'value' :  answer.answerValue
 			});
 			var radiolabel = $('<label />', {
-				'for'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
+				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-short',
 				'text'  :  answer.answerText.toUpperCase()
 			});
@@ -683,7 +642,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			var scale = $('<li />');
 			scale.append($('<input/>',{
 				'class' : 'likertbox likertbox-' + i,
-				'id' : 'likertbox-' + i + '-' + question.question.questionId,
+				'id' : 'likertbox-' + i + '-' + question.questionId,
 				'type': 'radio',
 				'name': "responseValue",
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
@@ -691,7 +650,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			}));
 			scale.append($('<label/>',{
 				'class' : 'likertbox likertbox-' + i,
-				'for' : 'likertbox-' + i + '-' + question.question.questionId				
+				'for' : 'likertbox-' + i + '-' + question.questionId				
 			}));
 			list.append(scale);
 		}
@@ -707,7 +666,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		break;
 	case 14: // Rank
 		var responseInp = $('<input />', {
-			'id'   : 'ranker-' + question.question.questionId,
+			'id'   : 'ranker-' + question.questionId,
 			'type' : 'hidden',
 			'class' : 'hidden',
 			'name' : 'responseValue',
@@ -720,7 +679,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'text' : 'Drag options to rank most preferred (1) to least (5)'
 		}));
 		var sortablelist = $('<ol />', {
-			'id' : 'sortable-' + question.question.questionId,
+			'id' : 'sortable-' + question.questionId,
 			'class' : 'ranker'});
 		for (var ans=0;ans<question.question.answers.length;ans++) {
 			var answer = question.question.answers[ans];
@@ -730,17 +689,17 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			var span = $('<span />', {'text' : answer.answerText });
 			listitem.append($('<i />', {
 				'class' : 'fa fa-long-arrow-up pull-right',
-				'onClick': 'rankUp('+question.question.questionId+','+ answer.answerValue+')'
+				'onClick': 'rankUp('+question.questionId+','+ answer.answerValue+')'
 			}));
 			listitem.append($('<i />', {
 				'class' : 'fa fa-long-arrow-down pull-right',
-				'onClick': 'rankDown('+question.question.questionId+','+ answer.answerValue+')'
+				'onClick': 'rankDown('+question.questionId+','+ answer.answerValue+')'
 			}));
 			listitem.append(span);
 			sortablelist.append(listitem);
 		}
 		sortablelist.sortable({stop: 
-			function(event, ui){updateRankerIndexes(question.question.questionId);}});
+			function(event, ui){updateRankerIndexes(question.questionId);}});
 		
 		listdiv.append(sortablelist);
 
@@ -748,10 +707,10 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'class' : 'text-right'
 		}).append($('<button />', {
 				'type' : 'button',
-				'id' : 'saverank-' + question.question.questionId, 
+				'id' : 'saverank-' + question.questionId, 
 				'class' : 'ranker-button',
 				'text' : "Save",
-				'onClick':'submitRank(this.form,'+question.question.questionId+','+pagecount+');',
+				'onClick':'submitRank(this.form,'+question.questionId+','+pagecount+');',
 				'disabled' : true
 			})));
 		form.append(listdiv);
@@ -761,19 +720,19 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		var ansdiv = $('<div />');
 		var alikediv = $('<div />', {'class' : 'col-xs-6 col-sm-6 col-md-6'});
 		alikediv.append($('<input />', {
-			'id'   : 'radiobox-' + question.question.questionId +"-1",
+			'id'   : 'radiobox-' + question.questionId +"-1",
 			'type' : 'radio', 'class' : 'radio-short', 'name' : 'responseValue',
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')', 'value' :  '1'}));
 		alikediv.append($('<label />', {
-			'for'   : 'radiobox-' + question.question.questionId +"-1", 'class' : 'radio-short',
+			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'radio-short',
 			'text'  :  'ALIKE' }));
 		var unlikediv = $('<div />', {'class' : 'col-xs-6 col-sm-6 col-md-6'});
 		unlikediv.append($('<input />', {
-			'id'   : 'radiobox-' + question.question.questionId +"-2",
+			'id'   : 'radiobox-' + question.questionId +"-2",
 			'type' : 'radio', 'class' : 'radio-short', 'name' : 'responseValue',
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')', 'value' :  '2'}));
 		unlikediv.append($('<label />', {
-			'for'   : 'radiobox-' + question.question.questionId +"-2", 'class' : 'radio-short',
+			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'radio-short',
 			'text'  :  'UNLIKE' }));
 		ansdiv.append(alikediv);
 		ansdiv.append(unlikediv);
@@ -788,12 +747,12 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'class' : 'col-xs-12 col-sm-12 col-md-12'
 			});
 			var radiolabel = $('<label />', {
-				'for'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
+				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-select',
 				'text'  :  answer.answerText
 			});
 			var radiobox = $('<input />', {
-				'id'   : 'radiobox-' + question.question.questionId +"-"+ answer.answerValue,
+				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'type' : 'radio',
 				'class' : 'radio-select',
 				'name' : 'responseValue',
@@ -960,8 +919,9 @@ function saveResponse(response) {
 
 function updateProgress() {
     var totalresponses = 0;
-    for (var q in questions) { ques = questions[q]; 
-	    if (responses[ques.question.questionId] !=null) {
+    for (var q in questions) {
+    	ques = questions[q]; 
+	    if (responses[ques.questionId] !=null) {
 	    	if (ques.page == activeSection.sectionNumber) totalresponses++;
 	    }
     } 

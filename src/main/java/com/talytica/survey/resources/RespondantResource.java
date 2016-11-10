@@ -4,15 +4,11 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
 
-
 import javax.annotation.security.PermitAll;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -27,13 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.employmeo.data.model.AccountSurvey;
-import com.employmeo.data.model.Person;
 import com.employmeo.data.model.Respondant;
 
-import com.employmeo.data.service.AccountSurveyService;
-import com.employmeo.data.service.PersonService;
 import com.employmeo.data.service.RespondantService;
-
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,19 +44,6 @@ public class RespondantResource {
 
 	@Autowired
 	private RespondantService respondantService;
-
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@ApiOperation(value = "Gets the list of all Respondants", response = Respondant.class, responseContainer = "List")
-	   @ApiResponses(value = {
-	     @ApiResponse(code = 200, message = "Respondants found"),
-	     @ApiResponse(code = 404, message = "Respondants not found")
-	   })	
-	public Iterable<Respondant> getAllRespondants() {
-		return respondantService.getByAccountId(1l);
-	}
-
 	
 	@GET
 	@Path("/{uuid}")
@@ -91,28 +70,16 @@ public class RespondantResource {
 			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
 				// TODO put in better error handling here.
 				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity(respondant).build();
+				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
 			}
 			log.debug("Returning respondant {}", respondant);
 			return Response.status(Status.OK).entity(respondant).build();
 		} else {
 			// TODO put in better error handling here.
 			log.debug("Respondant not found for uuid {}", uuid);
-			return Response.status(Status.NOT_FOUND).build();
+			return Response.status(Status.NOT_FOUND).entity("Unable to associate this link with an assessment.").build();
 		}
-	}	
-
-	
-	public Response saveRespondant(Respondant respondant) {
-		log.debug("Requested respondant save: {}", respondant);
-		
-		Respondant savedRespondant = respondantService.save(respondant);
-		log.debug("Saved respondant {}", savedRespondant);
-		
-		return Response.status(Status.CREATED).entity(savedRespondant).build();
 	}
-
-
 		
 	@GET
 	@Path("/{uuid}/getsurvey")
@@ -137,14 +104,14 @@ public class RespondantResource {
 			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
 				// TODO put in better error handling here.
 				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity(respondant.getAccountSurvey()).build();
+				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
 			}
 			log.debug("Returning survey by respondant {}", respondant);
 			return Response.status(Status.OK).entity(respondant.getAccountSurvey()).build();
 		} else {
 			// TODO put in better error handling here.
 			log.debug("Respondant not found for uuid {}", uuid);
-			return Response.status(Status.NOT_FOUND).build();
+			return Response.status(Status.NOT_FOUND).entity("Unable to associate this link with an assessment.").build();
 		}		
 	}
 	

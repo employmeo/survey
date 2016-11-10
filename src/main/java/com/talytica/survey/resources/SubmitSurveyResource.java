@@ -1,5 +1,8 @@
 package com.talytica.survey.resources;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 import javax.annotation.security.PermitAll;
 
 import javax.validation.constraints.NotNull;
@@ -57,7 +60,7 @@ public class SubmitSurveyResource {
 			if (respondant == null) return Response.status(Status.NOT_FOUND).build();
 			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
 				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
-				respondant.setFinishTime(submission.finish);
+				respondant.setFinishTime(new Timestamp(new Date().getTime()));
 				respondantService.save(respondant);
 //TODO Trigger scoring logic....	postScores(respondant);
 				return Response.status(Status.ACCEPTED).build();

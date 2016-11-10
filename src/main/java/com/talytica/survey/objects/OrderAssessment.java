@@ -1,6 +1,18 @@
 package com.talytica.survey.objects;
 
 public class OrderAssessment {
-  public String payrollId;
   public Long asid;
+  public String email;
+  public String fname;
+  public String lname;
+  public String address;
+  public Double lat;
+  public Double lng;
+  public Long locationId;
+  public Long positionId;
+  public String country_short;
+  public String formatted_address;
+  
+  public OrderAssessment() {
+  }
 }

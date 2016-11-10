@@ -2,34 +2,20 @@
 // Survey REST Service API Calls
 //
 
+
 function getRespondant(uuId) {
     $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'respondant/'+uuId,
-        success: function(data)
-        {
+        success: function(data) { 
         	respondant = data;
+        	getResponses(respondant.respondantUuid);
         },
-        complete: function() {
-        	readyPage();
-        }
-      });
-}
+        error: function(data) { showError(data); }
+    });
+    
 
-function getRespondantSurvey(uuId) {
-    $.ajax({
-        type: "GET",
-        async: true,
-        url: servicePath + 'respondant/' + uuId + '/getsurvey',
-        success: function(data)
-        {
-        	survey = data;
-        },
-        complete: function() {
-        	readyPage();
-        }
-      });
 }
 
 function getRespondantByPayrollId(id, asid) {
@@ -37,30 +23,33 @@ function getRespondantByPayrollId(id, asid) {
         type: "GET",
         async: true,
         url: servicePath + 'survey/' + asid + '/respondantbypayroll/' + id,
-        success: function(data)
-        {
+        success: function(data) { 
         	respondant = data;
+        	getResponses(respondant.respondantUuid);
         },
-        complete: function() {
-        	readyPage();
-        }
-      });
+        error: function(data) { showError(data); }
+    });
 }
 
-function getPlainSurveyForNewRespondant(form) {
+function orderNewAssessment(order) {
     $.ajax({
         type: "POST",
         async: true,
-        url: servicePath + 'respondant',
-        data: $(form).serialize(),
-        success: function(data)
-        {
-        	respondant = data;
+        url: servicePath + 'orderassessment',
+        data: JSON.stringify(order),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
         },
-        complete: function() {
-            readyPage();
-        }
-      });	
+        success: function(data) { 
+        	respondant = data;
+        	getResponses(respondant.respondantUuid);
+        	readyPage();
+        },
+        error: function(data) {showError(data);}
+    });
 }
 
 function getAccountSurvey(asid) {
@@ -68,33 +57,49 @@ function getAccountSurvey(asid) {
         type: "GET",
         async: true,
         url: servicePath + 'survey/' + asid,
-        success: function(data)
-        {
+        success: function(data) {
         	survey = data;
+        	$('#wait').addClass('hidden');
+            createNewRespondantForm();
         },
-        complete: function() {
-        	readyPage();
-        }
-      });
+        error: function(data) { showError(data); }
+    });
 }
 
-function putResponse(form, cb) {
-	$.ajax({
-        type: "PUI",
+function getRespondantSurvey(uuId) {
+    $.ajax({
+        type: "GET",
         async: true,
-        url: servicePath + 'response',
-        data: $(form).serialize(), 
-        success: function(data)
-        {
-           saveResponse(data);
-           cb();
-        }
-  });
+        url: servicePath + 'respondant/' + uuId + '/getsurvey',
+        success: function(data) { survey = data; readyPage()},
+        error: function(data) { showError(data); }
+    });
 }
 
-function postResponse(response, cb) {
+function getResponses(uuId) {
+    $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'response/'+uuId,
+        success: function(data) {
+        	// Store Responses by Question ID
+        	responses = new Array();
+        	if (data != null) {
+        		for (var i=0;i<data.length;i++) {
+        			responses[data[i].questionId] = data[i];
+        		}
+        	}
+        	readyPage();
+        },
+        error: function(data) { responses = new Array(); }
+    });
+}
+
+function sendResponse(response, cb) {
+    var method = "POST";
+    if (response.id != null) method="PUT";
 	$.ajax({
-        type: "POST",
+        type: method,
         async: true,
         url: servicePath + 'response',
         data: JSON.stringify(response),
@@ -104,27 +109,31 @@ function postResponse(response, cb) {
         	'charset':'UTF-8',
         	'Accept': 'application/json'
         },
-        success: function(data)
-        {
-           saveResponse(data);
-           cb();
-        }
+        success: cb,
+        error: function(data) { console.log(data); } // what to do here?
   });
 }
 
 function submitSurvey() {
 	var redirect = respondant.redirectUrl;
+	var submission = {}
+	submission.uuid = respondant.respondantUuid;
     $.ajax({
-        type: "PUT",
+        type: "POST",
         async: true,
-        url: servicePath + 'respondant/' + respondant.respondantUuid + '/submit',
-        data : respondant,
+        url: servicePath + 'submitsurvey',
+        data : JSON.stringify(submission),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
         success: function(data)
         {
-            window.location.assign(redirect);
+        	if (redirect != null) {
+                window.location.assign(redirect);        		
+        	}
         }
       });	
 }
-
-
-

@@ -66,7 +66,7 @@ public class AccountSurveyResource {
 		if(null != survey) {
 			return Response.status(Status.OK).entity(survey).build();
 		} else {
-			return Response.status(Status.NOT_FOUND).build();
+			return Response.status(Status.NOT_FOUND).entity("No such assessment found").build();
 		}
 	}	
 
@@ -110,7 +110,7 @@ public class AccountSurveyResource {
 		}
 
 		log.debug("Respondant not found for payroll id {}", payrollId);
-		return Response.status(Status.NOT_FOUND).build();
+		return Response.status(Status.NOT_FOUND).entity("Unable to find assessment for this id.").build();
 
 	}
 
