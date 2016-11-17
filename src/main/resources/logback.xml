@@ -7,7 +7,7 @@
 		</encoder>
 	</appender>
 	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-		<file>employmeo.log</file>
+		<file>logs/survey.log</file>
 		<encoder>
 			<pattern>%date{yyyy-MM-dd HH:mm:ss} [%-5level] %logger - %msg%n
 			</pattern>
