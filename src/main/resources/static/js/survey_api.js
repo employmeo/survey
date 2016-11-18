@@ -46,22 +46,17 @@ function orderNewAssessment(order) {
         success: function(data) { 
         	respondant = data;
         	getResponses(respondant.respondantUuid);
-        	readyPage();
         },
         error: function(data) {showError(data);}
     });
 }
 
-function getAccountSurvey(asid) {
+function getAccountSurvey(asid, cb) {
     $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'survey/' + asid,
-        success: function(data) {
-        	survey = data;
-        	$('#wait').addClass('hidden');
-            createNewRespondantForm();
-        },
+        success: cb,
         error: function(data) { showError(data); }
     });
 }
@@ -71,7 +66,7 @@ function getRespondantSurvey(uuId) {
         type: "GET",
         async: true,
         url: servicePath + 'respondant/' + uuId + '/getsurvey',
-        success: function(data) { survey = data; readyPage()},
+        success: function(data) { survey = data; buildSurvey()},
         error: function(data) { showError(data); }
     });
 }
@@ -89,7 +84,7 @@ function getResponses(uuId) {
         			responses[data[i].questionId] = data[i];
         		}
         	}
-        	readyPage();
+        	buildSurvey();
         },
         error: function(data) { responses = new Array(); }
     });
@@ -116,6 +111,7 @@ function sendResponse(response, cb) {
 
 function submitSurvey() {
 	var redirect = respondant.redirectUrl;
+	if (redirect == null) redirect = survey.redirectPage;
 	var submission = {}
 	submission.uuid = respondant.respondantUuid;
     $.ajax({

@@ -7,7 +7,7 @@ var survey;
 var activeSection;
 var questions;
 var totalpages;
-var responses = new Array();
+var responses;
 var pagination;
 var progress;
 var sections;
@@ -32,30 +32,38 @@ function launchApp() {
 	if (urlParams.respondant_uuid != null) {
 		getRespondant(urlParams.respondant_uuid);
 	    getRespondantSurvey(urlParams.respondant_uuid);
+	} else if (urlParams.benchmark != null) {
+		getAccountSurvey(urlParams.benchmark, function(data) {
+        	survey = data;
+        	buildLookupRespondantForm();
+        });	
 	} else if (urlParams.asid != null) {
-		getAccountSurvey(urlParams.asid);
+		getAccountSurvey(urlParams.asid, function(data) {
+        	survey = data;
+            buildNewRespondantForm();
+        });
 	} else {
-		var asid = urlParams.asid;
 		showError({"responseText" : "No ID Provided"});
 	}
 }
 
+function lookupRespondant(form) {
+    var lookup = {};
+	var fields = $(form).serializeArray();
+	for (var i=0;i<fields.length;i++) {
+		lookup[fields[i].name] = fields[i].value;
+	}
+	getRespondantByPayrollId(lookup.id,lookup.asid);
+}
+
 function submitNewRespondant(form) {
+	$('#wait').removeClass('hidden');
     var order = {};
 	var fields = $(form).serializeArray();
-	console.log(order);
 	for (var i=0;i<fields.length;i++) {
 		order[fields[i].name] = fields[i].value;
 	}
-	orderNewAssessment(order);	
-}
-
-function readyPage() {
-	if ((respondant != null) && (survey != null)) {
-		$('#wait').addClass('hidden');
-		var data = {};
-		assemblePlainSurvey();  		
-	}
+	orderNewAssessment(order);
 }
 
 function submitPlainAnswer(form, pagenum) {
@@ -65,8 +73,8 @@ function submitPlainAnswer(form, pagenum) {
 		response[fields[i].name] = fields[i].value;
 	}
 	sendResponse(response, function(data) {
-		isPageComplete(pagenum);
 		saveResponse(data);
+		isPageComplete(pagenum);
 	});
 }
 
@@ -113,7 +121,7 @@ function isPageComplete(pagenum) {
 	var qlist = pagination[pagenum];
 	var complete = true;
 	for (var key in qlist ) {
-		if (responses[qlist[key].question.questionId] == null) complete = false;
+		if (responses[qlist[key].questionId] == null) complete = false;
 	}
 	if (complete) {
 		var button = '#nextbtn-' + pagenum;
@@ -159,24 +167,22 @@ function showIdNotFound(data) {
 		card.append(getHrDiv());
 		card.append($('<div />', {
 			'class' : 'col-xs-12 col-sm-12 col-md-12',
-			}).append($('<h3 />', { 'class' : 'text-center', 'text' : data.message})));
+			}).append($('<h3 />', { 'class' : 'text-center', 'text' : data.responseText})));
 
 		card.append($('<div />', {
 			'class' : 'col-xs-12 col-sm-12 col-md-12 text-center',
-		}).append($('<button />',{
+			}).append($('<button />',{
 					'type' : 'button',
 					'class' : 'btn btn-primary',
-					'onClick' : 'buildLookupSurvey(urlParams.account_id);',
+					'onClick' : 'buildLookupSurvey(urlParams.benchmark);',
 					'text' : 'Try Again'
-				})));								
+			})));							
 		card.append(getHrDiv());
 		card.appendTo(deck);
 }
 
 // Code for building survey pages.
-function createNewRespondantForm() {
-	var surveyId
-	var accountId
+function buildNewRespondantForm() {
   // code to create a form to fill out for a new survey respondant	
 	var deck = document.getElementById('wrapper');
 	$(deck).empty();
@@ -189,7 +195,9 @@ function createNewRespondantForm() {
 	infopage.append(getHrDiv());
 
 	var form = $('<form />',{
-		'class' : 'form'
+		'class' : 'form',
+		'action' : 'javascript:void(0);',
+		'onSubmit' : 'submitNewRespondant(this);'
 	});
 	form.append($('<input />', {
 		'type' : 'hidden',
@@ -297,9 +305,8 @@ function createNewRespondantForm() {
 		'id' : 'country_short'				
 	}));
 	form.append($('<button />', {
-		'type' : 'button',
+		'type' : 'submit',
 		'class' : 'btn btn-primary',
-		'onClick' : 'submitNewRespondant(this.form);',
 		'text' : 'Submit'
 	}));
 
@@ -309,11 +316,13 @@ function createNewRespondantForm() {
 	infopage.appendTo(deck);
 	
 	$('#address').geocomplete({details:'form'});
+
+	$('#wait').addClass('hidden');
 }
 
 
 // 
-function buildLookupSurvey(accountId) {
+function buildLookupRespondantForm() {
 	  // code to create a form to fill out for a new survey respondant	
 		var deck = document.getElementById('wrapper');
 		$(deck).empty();
@@ -325,12 +334,14 @@ function buildLookupSurvey(accountId) {
 		infopage.append(getHrDiv());
 
 		var form = $('<form />',{
-			'class' : 'form'
+			'class' : 'form',
+			'action' : 'javascript:void(0);',
+			'onSubmit' : 'lookupRespondant(this);'
 		});
 		form.append($('<input />', {
 			'type' : 'hidden',
-			'name' : 'account_id',
-			'value' : accountId
+			'name' : 'asid',
+			'value' : urlParams.benchmark 
 		}));
 		form.append($('<label />', {
 			'for' : 'fname',
@@ -345,7 +356,7 @@ function buildLookupSurvey(accountId) {
 		row.append($('<input />', {
 			'class' : 'form-control',
 			'type' : 'text',
-			'name' : 'payroll_id',
+			'name' : 'id',
 			'placeholder' : 'ID#',
 			'required' : true			
 		}));
@@ -354,9 +365,8 @@ function buildLookupSurvey(accountId) {
 		form.append($('<div />', {
 			'class' : 'col-xs-12 col-sm-12 col-md-12 text-center',
 			}).append($('<button />', {
-			'type' : 'button',
+			'type' : 'submit',
 			'class' : 'btn btn-primary',
-			'onClick' : 'getSurveyByPayrollId(this.form);',
 			'text' : 'Submit'
 		})));
 
@@ -365,6 +375,9 @@ function buildLookupSurvey(accountId) {
 			}).append(form));
 		infopage.append(getHrDiv());
 		infopage.appendTo(deck);
+		
+		// Remove the wait screen
+		$('#wait').addClass('hidden');
 }
 
 
@@ -372,7 +385,10 @@ function buildLookupSurvey(accountId) {
 // Survey page building functions
 //
 
-function assemblePlainSurvey() {
+function buildSurvey() {
+	if ((responses == null) || (survey == null)) {	
+		return; // wait for both function calls to complete
+	}
 	var deck = document.getElementById('wrapper');
 	sections = survey.survey.surveySections.sort(function(a,b) {
 		return a.sectionNumber < b.sectionNumber ? -1:1;
@@ -393,7 +409,7 @@ function assemblePlainSurvey() {
 			if (questions[q].page == section.sectionNumber) section.qtotal++;
 		}
 		section.complete = false;
-		if (section.section_all_required) {
+		if (section.allRequired) {
 			section.complete = isAllReqSectionComplete(section.sectionNumber);
 		} else if (section.section_timed) {
 			section.complete = isTimedSectionStarted(section.sectionNumber);
@@ -404,15 +420,18 @@ function assemblePlainSurvey() {
 	$(deck).empty();	
 	getPreamble().appendTo(deck);
 	if (activeSection != null) {
-		createSurveySection(deck, activeSection);
+		buildSurveySection(deck, activeSection);
 	} else {
 		getThankYouPage().appendTo(deck);
 	}
+
+	// Remove wait screen
+	$('#wait').addClass('hidden');
 }
 
 
 
-function createSurveySection(deck, section) {
+function buildSurveySection(deck, section) {
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
 	pagination = new Array();
 	var qlimit = section.questionsPerPage; // questions per page
@@ -853,7 +872,7 @@ function submitSection() {
 	if(nextSection != null) {
 		activeSection = nextSection;
 		$(deck).empty();
-		createSurveySection(deck, activeSection);
+		buildSurveySection(deck, activeSection);
 		$('#instructions').addClass('active');
 	} else {
 		getThankYouPage().appendTo(deck);
@@ -861,29 +880,11 @@ function submitSection() {
 	}
 }
 
-
-function isPageComplete(pagenum) {
-	var complete = true;
-	if (activeSection != null) {
-		if(activeSection.section_all_required) {
-			var qlist = pagination[pagenum];
-			for (var key in qlist ) {
-				if (responses[qlist[key].question_id] == null) complete = false;
-			}
-		}
-	}
-	if (complete) {
-		var button = '#nextbtn-' + pagenum;
-		$(button).attr('disabled', false);
-	}
-	return complete;
-}
-
 function isAllReqSectionComplete(sectionnum) {
 	var complete = true;
 	for (var key in questions ) {
-		if ((questions[key].question_page == sectionnum) &&
-		    (responses[questions[key].question_id] == null)) complete = false;
+		if ((questions[key].page == sectionnum) &&
+		    (responses[questions[key].questionId] == null)) complete = false;
 	}
 	return complete;
 }
@@ -891,19 +892,12 @@ function isAllReqSectionComplete(sectionnum) {
 function isTimedSectionStarted(sectionnum) {
 	var started = false;
 	for (var key in questions ) {
-		if ((questions[key].question_page == sectionnum) &&
-		    (responses[questions[key].question_id] != null)) started = true;
+		if ((questions[key].page == sectionnum) &&
+		    (responses[questions[key].questionId] != null)) started = true;
 	}
 	return started;
 }
 
-function isSurveyComplete() {
-	var complete = true;
-	for (var key in questions ) {
-		if (responses[questions[key].question_id] == null) complete = false;
-	}
-	return complete;
-}
 
 function saveResponse(response) {
 	responses[response.questionId] = response;
