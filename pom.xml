@@ -168,6 +168,42 @@
 				</testResources>
 			</build>
 		</profile>
+		<profile>
+			<id>prod</id>
+			<properties>
+				<lane>prod</lane>
+			</properties>
+			<build>
+				<resources>
+					<resource>
+						<directory>src/main/resources</directory>
+						<filtering>true</filtering>
+					</resource>
+					<resource>
+						<directory>${basedir}/profile/prod</directory>
+						<includes>
+							<include>*.properties</include>
+							<include>logback.xml</include>
+						</includes>
+						<filtering>true</filtering>
+					</resource>
+				</resources>
+				<testResources>
+					<testResource>
+						<directory>src/test/resources</directory>
+						<filtering>true</filtering>
+					</testResource>
+					<testResource>
+						<directory>${basedir}/profile/local</directory>
+						<includes>
+							<include>*.properties</include>
+							<include>logback.xml</include>
+						</includes>
+						<filtering>true</filtering>
+					</testResource>
+				</testResources>
+			</build>
+		</profile>				
 	</profiles>		
 	<build>
 		<finalName>${project.artifactId}-${project.version}-${lane}</finalName>
