@@ -1,8 +1,11 @@
 package com.talytica.survey.resources;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -18,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.employmeo.data.model.Answer;
 import com.employmeo.data.model.Respondant;
 import com.employmeo.data.model.Response;
 import com.employmeo.data.model.Survey;
@@ -32,6 +36,7 @@ import com.twilio.sdk.verbs.TwiMLException;
 import com.twilio.sdk.verbs.TwiMLResponse;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +48,11 @@ import lombok.extern.slf4j.Slf4j;
 @Api( value="/1/twilio", produces=MediaType.APPLICATION_XML, consumes=MediaType.APPLICATION_FORM_URLENCODED)
 public class TwilioResource {
 	
-	@Value("${}")
+	private final int DEFAULT_RECORDING_LENGTH = 90;
+	private final int VOICE_QUESTION_TYPE = 16;
+	
+	
+	@Value("${com.talytica.urls.assessment}")
 	public String BASE_SURVEY_URL;
 	
 	@Autowired
@@ -76,6 +85,7 @@ public class TwilioResource {
 	@Path("/capture/{respondantId}/{questionId}")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Saves a media recording from twilio and returns twiml with next question")
 	public String captureRecording(
 			@ApiParam(value = "Respondant ID") @PathParam("respondantId") Long respondantId,
 			@ApiParam(value = "Question ID") @PathParam("questionId") Long questionId,
@@ -91,6 +101,7 @@ public class TwilioResource {
 			// Save the response
 			Response recording = new Response();
 			recording.setRespondant(respondant);
+			recording.setRespondantId(respondant.getId());
 			recording.setResponseText(recUrl);
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
@@ -98,8 +109,6 @@ public class TwilioResource {
 			respondant.getResponses().add(savedRecording);
 		}
 
-		log.debug("Twilio Capture Recording called by {} with {} for respondant {} and question {}", 
-				twiFrom, recUrl, respondantId, questionId);
 		// present the next question		
 		TwiMLResponse twiML = new TwiMLResponse();
 		try {
@@ -107,6 +116,8 @@ public class TwilioResource {
 		} catch (TwiMLException e) {
 			e.printStackTrace();
 		}
+
+		log.debug("Twilio Capture Recording returned {}", twiML.toEscapedXML());
 		return twiML.toEscapedXML();
 		
 	}
@@ -114,6 +125,7 @@ public class TwilioResource {
 	@GET
 	@Path("/nextquestion/{respondantId}")
 	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Returns twiml with next question or thankyou message")
 	public String nextQuestion(@ApiParam(value = "Respondant ID") @PathParam("respondantId") Long respondantId) {
 		
 		Respondant respondant = respondantService.getRespondantById(respondantId);
@@ -123,19 +135,22 @@ public class TwilioResource {
 		} catch (TwiMLException e) {
 			e.printStackTrace();
 		}
+		
+		log.debug("Twilio Next Question returned {}", twiML.toEscapedXML());
 		return twiML.toEscapedXML();
 		
 	}
 
 	@GET
-	@Path("/findsurvey/{asId}")
+	@Path("/{asId}/findbyid")
 	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Finds survey and returns twiml with instructions and first question")
 	public String findSurvey(
 			@ApiParam(value = "Account Survey ID") @PathParam("asId") Long asId,
 			@ApiParam(value = "From") @QueryParam("From") String twiFrom,
 			@ApiParam(value = "Digits") @QueryParam("Digits") String twiDigits) {	
+		log.info("twilio requested findby id pathparam asid: {} queryparam digits: {}", asId, twiDigits);
 		Respondant resp = respondantService.getRespondantByAccountSurveyIdAndPayrollId(asId, twiDigits);
-
 	    TwiMLResponse twiML = new TwiMLResponse();
 	    try {
 
@@ -158,44 +173,55 @@ public class TwilioResource {
 	        e.printStackTrace();
 	    }
 	    
+		log.debug("Twilio Find By ID returned {}", twiML.toEscapedXML());
 	    return twiML.toEscapedXML();	
 		
 	}
-
 	
-	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant resp) throws TwiMLException {
+	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
-	    SurveyQuestion nextQuestion = nextQuestion(resp);
+	    SurveyQuestion nextQuestion = nextQuestion(respondant);
         if (nextQuestion != null) {  
 	        Say prompt = new Say("Question " + nextQuestion.getSequence() + ". " +
 	        		nextQuestion.getQuestion().getQuestionText());
 	        Record record = new Record();
 	        record.setMethod("POST");
-	        record.setAction(BASE_SURVEY_URL + "/1/twilio/capture/" + 
-	            resp.getId() + "/"  + nextQuestion.getQuestion().getQuestionId());
-	        record.setMaxLength(90);
+	        record.setAction(BASE_SURVEY_URL + "/survey/1/twilio/capture/" + 
+	            respondant.getId() + "/"  + nextQuestion.getQuestion().getQuestionId());
+	        
+	        Integer length = null;
+	        Set<Answer> answers = nextQuestion.getQuestion().getAnswers();
+	        for (Answer ans : answers) {
+	        	length = ans.getAnswerValue();
+	        	record.setMaxLength(length);
+	        	break;
+	        }
+	        if (null == length) record.setMaxLength(DEFAULT_RECORDING_LENGTH);
 	
 	        Say tryagain = new Say("Sorry - we did not recieve a response. Please try again.");
-	        Redirect redirect = new Redirect(BASE_SURVEY_URL + "/1/twilio/nextquestion/" + resp.getId());
+	        Redirect redirect = new Redirect(BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + respondant.getId());
 	        redirect.setMethod("GET");
-
-
-	    	    twiML.append(prompt);
-	    	    twiML.append(record);
-	    	    twiML.append(tryagain);
-	    	    twiML.append(redirect);
+	    	twiML.append(prompt);
+	    	twiML.append(record);
+	    	twiML.append(tryagain);
+	    	twiML.append(redirect);
 
         } else {
 	        Say goodbye = new Say("Thank You. You have completed the questionairre. Goodbye.");
     	    twiML.append(goodbye);
-
+    	    
+    	    // Submit the Survey
+			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
+				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
+				respondant.setFinishTime(new Timestamp(new Date().getTime()));
+				respondantService.save(respondant);
+			}
         }
 	}
 	
-	
-	private SurveyQuestion nextQuestion(Respondant resp) {
+	private SurveyQuestion nextQuestion(Respondant respondant) {
 		SurveyQuestion nextQuestion = null;
-		List<SurveyQuestion> questions = new ArrayList<SurveyQuestion>(resp.getAccountSurvey().getSurvey().getSurveyQuestions());
+		List<SurveyQuestion> questions = new ArrayList<SurveyQuestion>(respondant.getAccountSurvey().getSurvey().getSurveyQuestions());
 		questions.sort(new Comparator<SurveyQuestion>() {
 			public int compare(SurveyQuestion sq1, SurveyQuestion sq2) {
 		    	int result = sq1.getPage() - sq2.getPage();
@@ -205,10 +231,11 @@ public class TwilioResource {
 		});
 		
 		// get responses
-		List<Response> responses = new ArrayList<Response>(resp.getResponses());
+		List<Response> responses = new ArrayList<Response>(respondant.getResponses());
 
 		for (SurveyQuestion question : questions) {
 			boolean isAnswered = false;
+			if (!question.getQuestion().getQuestionType().equals(VOICE_QUESTION_TYPE)) break;
 			for (Response answer : responses) {
 				if (question.getQuestion().getQuestionId().equals(answer.getQuestionId())) {
 					isAnswered = true;
