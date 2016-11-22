@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.employmeo.data.model.AccountSurvey;
 import com.employmeo.data.model.Answer;
 import com.employmeo.data.model.Respondant;
 import com.employmeo.data.model.Response;
@@ -29,6 +30,7 @@ import com.employmeo.data.model.SurveyQuestion;
 import com.employmeo.data.model.SurveySection;
 import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
+import com.twilio.sdk.verbs.Play;
 import com.twilio.sdk.verbs.Record;
 import com.twilio.sdk.verbs.Redirect;
 import com.twilio.sdk.verbs.Say;
@@ -50,6 +52,9 @@ public class TwilioResource {
 	
 	private final int DEFAULT_RECORDING_LENGTH = 90;
 	private final int VOICE_QUESTION_TYPE = 16;
+    private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatch.aifc";
+    private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponse.aifc";
+    private final String GOODBYE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
 	
 	
 	@Value("${com.talytica.urls.assessment}")
@@ -102,7 +107,7 @@ public class TwilioResource {
 			Response recording = new Response();
 			recording.setRespondant(respondant);
 			recording.setRespondantId(respondant.getId());
-			recording.setResponseText(recUrl);
+			recording.setResponseMedia(recUrl);
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
 			Response savedRecording = respondantService.saveResponse(recording);
@@ -155,18 +160,24 @@ public class TwilioResource {
 	    try {
 
 	    	if (resp != null) {
-	        	Survey survey = resp.getAccountSurvey().getSurvey();
-	        	// TODO hard coded to assume we have only one section... maybe need to fix!
-	        	SurveySection section = new ArrayList<SurveySection>(survey.getSurveySections()).get(0);
-	        	
-	    		Say thanks = new Say("Thank you. You are " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + " ." );
-	        	Say instructions = new Say(section.getInstructions());
-		    	twiML.append(thanks);
-		    	twiML.append(instructions);
+	    		AccountSurvey as = resp.getAccountSurvey();
+	    		String preambleMedia = as.getPreambleMedia();
+
+	    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
+		    	twiML.append(found);
+
+	    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
+	    			Play instructions = new Play(preambleMedia);
+	    			twiML.append(instructions);
+	    		} else {
+	    			Say instructions = new Say(as.getPreambleText());
+	    			twiML.append(instructions);
+	    		}       	
+		    	
 	        	nextQuestionTwiML(twiML, resp);
 	 
 	    	} else {
-	    		Say sorry = new Say("Sorry. We are unable to match your ID. Goodbye!");
+	    		Play sorry = new Play(NO_MATCH_AUDIO);
 	    		twiML.append(sorry);
 	    	}
 	    } catch (TwiMLException e) {
@@ -182,8 +193,16 @@ public class TwilioResource {
 	    // get Survey Questions & sort
 	    SurveyQuestion nextQuestion = nextQuestion(respondant);
         if (nextQuestion != null) {  
-	        Say prompt = new Say("Question " + nextQuestion.getSequence() + ". " +
-	        		nextQuestion.getQuestion().getQuestionText());
+	        Say prompt = new Say("Question " + nextQuestion.getSequence() + ". ");
+	        twiML.append(prompt);
+	        String media = nextQuestion.getQuestion().getQuestionMedia();
+	        if ((media != null) && (!media.isEmpty())) {
+	        	Play ques = new Play(media);
+	        	twiML.append(ques);
+	        } else {
+	        	Say ques = new Say(nextQuestion.getQuestion().getQuestionText());
+	        	twiML.append(ques);
+	        }
 	        Record record = new Record();
 	        record.setMethod("POST");
 	        record.setAction(BASE_SURVEY_URL + "/survey/1/twilio/capture/" + 
@@ -198,7 +217,7 @@ public class TwilioResource {
 	        }
 	        if (null == length) record.setMaxLength(DEFAULT_RECORDING_LENGTH);
 	
-	        Say tryagain = new Say("Sorry - we did not recieve a response. Please try again.");
+	        Play tryagain = new Play(NO_RESPONSE_AUDIO);
 	        Redirect redirect = new Redirect(BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + respondant.getId());
 	        redirect.setMethod("GET");
 	    	twiML.append(prompt);
@@ -207,7 +226,7 @@ public class TwilioResource {
 	    	twiML.append(redirect);
 
         } else {
-	        Say goodbye = new Say("Thank You. You have completed the questionairre. Goodbye.");
+	        Play goodbye = new Play(GOODBYE_AUDIO);
     	    twiML.append(goodbye);
     	    
     	    // Submit the Survey
