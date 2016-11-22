@@ -2,7 +2,6 @@ package com.talytica.survey.resources;
 
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -17,13 +16,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.employmeo.data.model.Account;
 import com.employmeo.data.model.AccountSurvey;
 import com.employmeo.data.model.Respondant;
 import com.employmeo.data.service.AccountSurveyService;
@@ -34,14 +29,15 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/1/survey")
 @Api( value="/1/survey", produces=MediaType.APPLICATION_JSON, consumes=MediaType.APPLICATION_JSON)
 public class AccountSurveyResource {
-	private static final Logger log = LoggerFactory.getLogger(AccountSurveyResource.class);
 	
 	@Autowired
 	private AccountSurveyService accountSurveyService;
@@ -90,8 +86,7 @@ public class AccountSurveyResource {
 
 		Respondant respondant = null;
 		if (survey != null) {
-			//Account account = survey.getAccount();
-			respondant = respondantService.getRespondantById(Long.getLong(payrollId));// this wont actually work!
+			respondant = respondantService.getRespondantByAccountSurveyIdAndPayrollId(survey.getId(), payrollId);
 		}
 		
 		if (respondant != null) {
@@ -102,11 +97,11 @@ public class AccountSurveyResource {
 				respondantService.save(respondant);
 			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
 				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity(respondant.getAccountSurvey()).build();
+				return Response.status(Status.GONE).entity(respondant).build();
 			}
 			
 			log.debug("Returning respondant {}", respondant);
-			return Response.status(Status.OK).entity(respondant.getAccountSurvey()).build();
+			return Response.status(Status.OK).entity(respondant).build();
 		}
 
 		log.debug("Respondant not found for payroll id {}", payrollId);

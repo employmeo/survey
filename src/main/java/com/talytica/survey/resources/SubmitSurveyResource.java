@@ -62,7 +62,6 @@ public class SubmitSurveyResource {
 				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
 				respondant.setFinishTime(new Timestamp(new Date().getTime()));
 				respondantService.save(respondant);
-//TODO Trigger scoring logic....	postScores(respondant);
 				return Response.status(Status.ACCEPTED).build();
 			} else {
 				return Response.status(Status.NOT_MODIFIED).build();	
