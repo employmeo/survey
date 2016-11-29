@@ -50,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 @Api( value="/1/twilio", produces=MediaType.APPLICATION_XML, consumes=MediaType.APPLICATION_FORM_URLENCODED)
 public class TwilioResource {
 	
-	private final int DEFAULT_RECORDING_LENGTH = 90;
+	private final int DEFAULT_RECORDING_LENGTH = 120;
 	private final int VOICE_QUESTION_TYPE = 16;
     private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatch.aifc";
     private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponse.aifc";
@@ -220,7 +220,6 @@ public class TwilioResource {
 	        Play tryagain = new Play(NO_RESPONSE_AUDIO);
 	        Redirect redirect = new Redirect(BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + respondant.getId());
 	        redirect.setMethod("GET");
-	    	twiML.append(prompt);
 	    	twiML.append(record);
 	    	twiML.append(tryagain);
 	    	twiML.append(redirect);
