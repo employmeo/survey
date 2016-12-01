@@ -27,8 +27,20 @@ var servicePath = '/survey/1/';
        urlParams[decode(match[1])] = decode(match[2]);
 })();
 
+function enableSwiping() {
+	$('#survey').on('swipeleft', function(e) { if ("INPUT" != e.target.tagName) nextPage();return false;});
+	$('#survey').on('swiperight', function(e) { if ("INPUT" != e.target.tagName) prevPage();return true;});
+	console.log('Swipe on!');
+}
+
+function disableSwiping() {
+	$('#survey').off("swipeleft swiperight");
+}
+
 function launchApp() {
 	$('#wait').removeClass('hidden');
+	$('#survey').carousel('pause');
+	enableSwiping();
 	if (urlParams.respondant_uuid != null) {
 		getRespondant(urlParams.respondant_uuid);
 	    getRespondantSurvey(urlParams.respondant_uuid);
@@ -395,7 +407,7 @@ function buildSurvey() {
 	});
 	questions = survey.survey.surveyQuestions.sort(function(a,b) {
 		if (a.questionPage == b.questionPage) {
-			return a.questionSequence < b.questionSequence ? -1:1;
+			return a.sequence < b.sequence ? -1:1;
 		} else {
 			return a.questionPage < b.questionPage ? -1:1;
 	}});
@@ -579,8 +591,7 @@ function getDisplayQuestion(question, qnum) {
 }
 
 function getPlainResponseForm(question, respondant, qcount, pagecount) {
-	var ansblock = $('<div />', {'class' : 'col-xs-12 col-sm-6 col-md-6'});
-
+	var answerwidth = 'col-xs-12 col-sm-6 col-md-6'; // by default answer is on right side of large screens
 	question.question.answers.sort(function(a,b) {
 		return a.displayId < b.displayId ? -1:1;
 	});
@@ -757,14 +768,122 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		ansdiv.append(unlikediv);
 		form.append(ansdiv);
 		break;
+	case 16: // Voice
+		break;
+	case 17: // Slider
+		var answerLeft = question.question.answers[0];
+		var answerRight = question.question.answers[1];
+		var leftdiv =  $('<div />',{'class':'col-xs-3', 'text':answerLeft.answerText});
+		var rightdiv =  $('<div />',{'class':'col-xs-3', 'text':answerRight.answerText});
+		var sliderdiv = $('<div />',{'class':'col-xs-6'});
+		var slider = $('<input />', {
+			'id'   : 'range-' + question.questionId,
+			'type' : 'range',
+			'class' : 'slider',
+			'name' : 'responseValue',
+			'max' : answerRight.answerValue,
+			'min' : answerLeft.answerValue,
+			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')'});
+		
+		$(slider).on('input', disableSwiping);
+		$(slider).on('stop', enableSwiping);
+		sliderdiv.append(slider);
+		
+		form.append(leftdiv);
+		form.append(sliderdiv);
+		form.append(rightdiv);
+		break;
+	case 18: // Image Ranker
+		answerwidth = 'col-xs-12'; // switch to full width
+		var responseInp = $('<input />', {
+			'id'   : 'ranker-' + question.questionId,
+			'type' : 'hidden',
+			'class' : 'hidden',
+			'name' : 'responseValue',
+			'value' :  '123456'
+		});
+		form.append(responseInp);
+		var listdiv = $('<div />');
+		listdiv.append($('<div />', {
+			'class' : 'instructions',
+			'text' : 'Drag options to rank most preferred (1) to least (6)'
+		}));
+		var sortablelist = $('<ol />', {
+			'id' : 'sortable-' + question.questionId,
+			'class' : 'image-ranker'});
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
+			var listitem = $('<li />', {
+				'class' : 'image-ranker-item',
+				'data-value' : answer.answerValue
+
+			});
+			var controls = $('<div />', {});
+			controls.append($('<i />', {
+				'class' : 'fa fa-arrow-up',
+				'onClick': 'rankUp('+question.questionId+','+ answer.answerValue+')'
+			}));
+			controls.append($('<span />'));
+			controls.append($('<i />', {
+				'class' : 'fa fa-arrow-down',
+				'onClick': 'rankDown('+question.questionId+','+ answer.answerValue+')'
+			}));
+			listitem.append(controls);
+			listitem.append($('<img />', {'src' : answer.answerMedia}));
+			sortablelist.append(listitem);
+		}
+		sortablelist.sortable({stop: 
+			function(event, ui){updateRankerIndexes(question.questionId);}});
+		
+		listdiv.append(sortablelist);
+
+		listdiv.append($('<div />', {
+			'class' : 'text-right'
+		}).append($('<button />', {
+				'type' : 'button',
+				'id' : 'saverank-' + question.questionId, 
+				'class' : 'ranker-button',
+				'text' : "Save",
+				'onClick':'submitRank(this.form,'+question.questionId+','+pagecount+');',
+				'disabled' : true
+			})));
+		form.append(listdiv);
+		break;
+	case 19: // multichoice image
+		var count = question.question.answers.length;
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
+			var holder = $('<div />',{'class':'col-xs-4'});
+			if ((count == 5) && (ans == 3)) holder.addClass('col-xs-offset-2');
+			var radiolabel = $('<label />', {
+				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'class' : 'radio-short'
+			});
+			radiolabel.append($('<img />', {'src' : answer.answerMedia}));
+			var radiobox = $('<input />', {
+				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'type' : 'radio',
+				'class' : 'radio-short',
+				'name' : 'responseValue',
+				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+				'value' :  answer.answerValue
+			});
+			
+			holder.append(radiobox);
+			holder.append(radiolabel);
+			form.append(holder);
+		}
+		break;
+	case 20: // reference checker
+		break;
+	case 21: // cognitive
+		answerwidth = 'col-xs-12'; // switch to full width
+		break;
 	case 6: // Multiple Choice (radio)
 	default:
 		// basic multichoice
 		for (var ans=0;ans<question.question.answers.length;ans++) {
 			var answer = question.question.answers[ans];
-			var qrespdiv = $('<div />', {
-				'class' : 'col-xs-12 col-sm-12 col-md-12'
-			});
 			var radiolabel = $('<label />', {
 				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-select',
@@ -783,8 +902,9 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			form.append(radiolabel);
 		}
 		break;
-		break;
 	}
+	
+	var ansblock = $('<div />', {'class' : answerwidth });
 	ansblock.append(form);
 	return ansblock;
 }

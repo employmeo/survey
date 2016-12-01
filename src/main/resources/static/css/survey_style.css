@@ -338,9 +338,12 @@ label.radio-short, label.radio-select {
  	cursor: hand;
 }
 
-label.radio-short, label.radio-select {
+label.radio-short img {
+	width: 100%;
+	height: auto;
+	-webkit-filter: brightness(100%);
+	filter: brightness(100%);
 }
-
 
 label.radio-select {
 	font-family: Verdana, Arial, FontAwesome;
@@ -358,7 +361,10 @@ input.radio-select:checked+label.radio-select
 	background-color: #2e6da4;
     color: white;
 }
-
+input.radio-short:checked+label.radio-short img {
+	-webkit-filter: brightness(50%);
+	filter: brightness(50%);
+}
 /**
  * 4.5 List Ranking
  * ----------------------------------------------------------------------------
@@ -471,6 +477,45 @@ form.unsubmitted li, form.submitted li {
     content: "\f00c" ;
 }
 
+.image-ranker {
+	counter-reset: ranker; 
+	columns: 2;
+}
+
+.image-ranker-item {
+	display: block;
+}
+
+.image-ranker-item div {
+	z-index:10;
+	padding: 2px;
+	position: absolute;
+	background-color:black;
+	color:white;
+	opacity:.5;
+	font-size: 16px
+}
+
+.image-ranker-item span {
+	counter-increment: ranker;
+}
+
+.image-ranker-item span:before {
+	content: counter(ranker);
+}
+
+.image-ranker-item i {
+    margin: 5px;
+    pointer: hand;
+    cursor: pointer;
+}
+
+.image-ranker-item img {
+	width: 100%;
+	height: auto;
+	cursor: move;
+}
+
 /**
  * 4.5 Schedules
  * ----------------------------------------------------------------------------
@@ -494,3 +539,8 @@ input.check-morning:checked+label.check-morning:before,
 input.check-afternoon:checked+label.check-afternoon:before ,
 input.check-evening:checked+label.check-evening:before { color: #0080ff;}
 
+@media (min-width: 600px) {
+	.image-ranker {
+		columns: 3;
+	}
+}
