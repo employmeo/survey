@@ -890,12 +890,13 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		testPanel.append(hidden);
 		var display = $('<div />',{'id':'cog_display_' + question.questionId});
 		testPanel.append(display);
-		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn'});
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn btn-default'});
 		start.click(function() {test.show();});
 		var submit= $('<button />', {'id':'cog_submit_' + question.questionId, 
-			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn'});
+			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn btn-default'});
 		submit.click(function() {test.scoreResponse();});
-		var input = $('<input />',{'id':'cog_input_' + question.questionId, 'disabled' : true});
+		var input = $('<input />',{'id':'cog_input_' + question.questionId,
+			'pattern' : '\d', 'class' : 'form-control', 'disabled' : true});
 		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'to get started click start'});
 		testPanel.append(start);
 		testPanel.append(instr);

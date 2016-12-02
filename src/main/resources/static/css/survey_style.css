@@ -447,11 +447,13 @@ form.unsubmitted li, form.submitted li {
 
 .image-ranker {
 	counter-reset: ranker; 
-	columns: 2;
 }
 
 .image-ranker-item {
 	display: block;
+	width: 48%;
+	margin: 1%;
+	float: left;
 }
 
 .image-ranker-item div {
@@ -561,7 +563,8 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
  */
 
 @media (min-width: 600px) {
-	.image-ranker {
-		columns: 3;
+	.image-ranker-item {
+	    width: 31%;
+	    margin: 1%;
 	}
 }

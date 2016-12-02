@@ -112,7 +112,8 @@ function sendResponse(response, cb) {
 function submitSurvey() {
 	var redirect = respondant.redirectUrl;
 	if (redirect == null) redirect = survey.redirectPage;
-	var submission = {}
+	if (redirect == null) redirect = '/thankyou.htm';
+	var submission = {};
 	submission.uuid = respondant.respondantUuid;
     $.ajax({
         type: "POST",
