@@ -168,38 +168,6 @@ label.likertbox:hover {
 	transform: scale(1.3);
  }
 
-/***
-input.likertbox-1:checked  + label.likertbox-1:before {
-  color: #ff0000;
-}
-label.likertbox-1 {
-  -webkit-text-stroke-color: #ff0000;
-}
-input.likertbox-2:checked  + label.likertbox-2:before {
-  color: #ff8000;
-}
-label.likertbox-2 {
-  -webkit-text-stroke-color: #ff8000;
-}
-input.likertbox-3:checked  + label.likertbox-3:before {
-  color: #ffff00;
-}
-label.likertbox-3 {
-  -webkit-text-stroke-color: #ffff00;
-}
-input.likertbox-4:checked  + label.likertbox-4:before {
-  color: #80ff80;
-}
-label.likertbox-4 {
-  -webkit-text-stroke-color: #80ff80;
-}
-input.likertbox-5:checked  + label.likertbox-5:before {
-  color: #00ff00;
-}
-label.likertbox-5 {
-  -webkit-text-stroke-color: #00ff00;
-}
-*/
 
 /**
  * 3.0 Thumbs up/down
@@ -299,7 +267,6 @@ input.likert-5:checked ~ label.likert-5:before {
 }
 
 
-
 /**
  * 4.0 Checkboxes & radios
  * ----------------------------------------------------------------------------
@@ -365,6 +332,7 @@ input.radio-short:checked+label.radio-short img {
 	-webkit-filter: brightness(50%);
 	filter: brightness(50%);
 }
+
 /**
  * 4.5 List Ranking
  * ----------------------------------------------------------------------------
@@ -516,6 +484,9 @@ form.unsubmitted li, form.submitted li {
 	cursor: move;
 }
 
+
+
+
 /**
  * 4.5 Schedules
  * ----------------------------------------------------------------------------
@@ -538,6 +509,56 @@ label.check-evening:before { content: '\f186'; }
 input.check-morning:checked+label.check-morning:before,
 input.check-afternoon:checked+label.check-afternoon:before ,
 input.check-evening:checked+label.check-evening:before { color: #0080ff;}
+
+
+
+
+/**
+ * 5.0 Cognitive Tests
+ * ----------------------------------------------------------------------------
+ */
+ 
+.working-order-display div {	
+	height: 250px;
+    width: 250px;
+    padding-top: 50px;
+    font-size: 150px;
+    line-height: 150px;
+    text-align: center;
+    margin:auto;
+    color: white;
+    background-color: black;
+}
+
+.working-order-display input {
+	display: block;
+    width: 250px;
+    font-size: 40px;
+    margin:auto;
+    text-align: center;
+}
+
+.working-order-display button {
+    width: 250px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+.working-order-display span {
+    display: block;
+    text-align: center;
+    margin: auto;
+    width: 250px;
+    min-height: 50px;
+    padding: 3px;
+}
+
+
+/**
+ *
+ * 10.0 Responsive elements
+ *
+ */
 
 @media (min-width: 600px) {
 	.image-ranker {

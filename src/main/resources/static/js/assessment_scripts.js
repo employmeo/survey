@@ -599,8 +599,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	var form =  $('<form />', {
 		 'name' : 'question_'+question.questionId,
 		 'id' : 'question_'+question.questionId,
-		 'action' : servicePath + '/response',
-		 'method' : 'POST'
+		 'action' : 'javascript:void(0);'
 	});
 	form.append($('<input/>', {
 		name : 'id',
@@ -877,7 +876,33 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 20: // reference checker
 		break;
 	case 21: // cognitive
-		answerwidth = 'col-xs-12'; // switch to full width
+		//answerwidth = 'col-xs-12'; // switch to full width
+		var hidden = $('<input />', {
+			'id'   : 'cog_maxval_' + question.questionId,
+			'type' : 'hidden',
+			'class' : 'hidden',
+			'name' : 'responseValue',
+			'value' :  '0'
+		});
+
+		var test = new WorkingOrderTest(question.questionId, pagecount);
+		var testPanel = $('<div />',{'class':'working-order-display text-center'});
+		testPanel.append(hidden);
+		var display = $('<div />',{'id':'cog_display_' + question.questionId});
+		testPanel.append(display);
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn'});
+		start.click(function() {test.show();});
+		var submit= $('<button />', {'id':'cog_submit_' + question.questionId, 
+			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn'});
+		submit.click(function() {test.scoreResponse();});
+		var input = $('<input />',{'id':'cog_input_' + question.questionId, 'disabled' : true});
+		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'to get started click start'});
+		testPanel.append(start);
+		testPanel.append(instr);
+		testPanel.append(input);
+		testPanel.append(submit);
+		form.append(testPanel);
+		form.submit(function(e){test.scoreResponse();});
 		break;
 	case 6: // Multiple Choice (radio)
 	default:
@@ -1144,4 +1169,99 @@ function submitRank(form, id, pagenum) {
 	$('#saverank-'+id).attr('disabled', true);
 	$('#saverank-'+id).text('Saved');
     submitPlainAnswer(form, pagenum);
+}
+
+
+
+
+/*********
+ * 
+ *   Cognitive Stuff - to be pulled into different place
+ * 
+ */
+
+
+function WorkingOrderTest(questionId, pagecount) {
+	this.questionId = questionId;
+	this.pagecount = pagecount;
+    this.init();
+}
+
+WorkingOrderTest.prototype.init = function() {
+  this.maxValue = 0;
+  this.currentCount = 3;   //default size = 3
+  this.score = 2; // total number of mistakes allowed
+  this.currentSet = this.generateSet();
+  this.shown = false;
+}
+
+WorkingOrderTest.prototype.generateSet = function() {
+    var arrNumber = [];
+    for (var i=0;i<this.currentCount;i++) {
+    	arrNumber.push(Math.floor(Math.random() * 10));
+    }
+    return arrNumber;
+}
+
+WorkingOrderTest.prototype.show = function() {
+	$('#cog_start_'+this.questionId).prop('disabled',true);
+	$('#cog_input_'+this.questionId).val('');;
+	$('#cog_instr_'+this.questionId).text('');
+	
+	var target = '#cog_display_'+this.questionId;
+    var set = this.currentSet;
+    for (var i = 0; i <this.currentSet.length; i++) {
+    	delayDisplay(i);
+	}
+    
+    var id = this.questionId;
+    setTimeout(function() {
+    	$('#cog_input_'+id).prop('disabled',false);
+    	$('#cog_submit_'+id).prop('disabled',false);
+    	$('#cog_instr_'+id).text('Enter digits in increasing order');	
+    	console.log('done showing');
+        this.shown = true;
+    }, 2200 + 1400*set.length); 
+    
+    function delayDisplay(i) {
+        setTimeout(function(){$(target).html(set[i]);},1000 + 1400*i);
+        setTimeout(function(){$(target).html('');},2000 + 1400*i);
+    }
+}
+
+WorkingOrderTest.prototype.scoreResponse = function() {
+	$('#cog_input_'+this.questionId).prop('disabled',true);
+	$('#cog_submit_'+this.questionId).prop('disabled',true);
+	var responses = $('#cog_input_'+this.questionId).val().split('');
+	var answers = this.currentSet.sort();	
+	for (var i=0;i<answers.length;i++) {
+		if(answers[i] != responses[i]) this.score--;
+	}
+	this.next();
+}
+
+WorkingOrderTest.prototype.next = function() {
+	if (this.score >0) {
+		this.maxValue = this.currentCount;
+		this.currentCount++;
+		this.currentSet = this.generateSet();
+        this.shown = false;
+		//intructions + enable start.
+		$('#cog_instr_'+this.questionId).text('Correct - Click Start.');
+		$('#cog_start_'+this.questionId).prop('disabled',false);
+	} else {
+		//disable everything - and tell them they're done - send to server?
+		$('#cog_maxval_'+this.questionId).val(this.maxValue);
+		var fields = $('#question_'+this.questionId).serializeArray();
+		var response = {};
+		for (var i=0;i<fields.length;i++) {
+			response[fields[i].name] = fields[i].value;
+		}
+		var pagenum = this.pagenum;
+		sendResponse(response, function(data) {
+			saveResponse(data);
+			isPageComplete(pagenum);
+		});
+		$('#cog_instr_'+this.questionId).text('You are done. Score: ' + this.maxValue);
+	}
 }
