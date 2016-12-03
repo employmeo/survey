@@ -501,8 +501,17 @@ function buildSurveySection(deck, section) {
 			if (responses[i] != null) {
 			    saveResponse(responses[i]);
 			    var radios =$('form[name=question_'+responses[i].questionId+
-    		    '] :input[name=responseValue][value=' + responses[i].responseValue + ']');
-		        $(radios).prop('checked', true);
+    		    '] :input[type=radio][name=responseValue][value=' + responses[i].responseValue + ']');
+			    var checkboxes =$('form[name=question_'+responses[i].questionId+
+		    		    '] :input[type=checkboxes][name=responseValue][value=' + responses[i].responseValue + ']');
+			    var range = $('form[name=question_'+responses[i].questionId+'] :input[type=range][name=responseValue]');
+			    var hidden =$('form[name=question_'+responses[i].questionId+'] :input[type=hidden][name=responseValue]');
+			    
+			    $(radios).prop('checked', true);
+			    $(checkboxes).prop('checked', true);
+			    $(range).val(responses[i].responseValue);
+			    $(hidden).val(responses[i].responseValue);
+			    $(hidden).trigger('update');
 			}
 		}		
 	}
@@ -599,6 +608,8 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	var form =  $('<form />', {
 		 'name' : 'question_'+question.questionId,
 		 'id' : 'question_'+question.questionId,
+		 'data-questionId' : question.questionId,
+		 'data-pagecount' : pagecount,
 		 'action' : 'javascript:void(0);'
 	});
 	form.append($('<input/>', {
@@ -696,11 +707,13 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 14: // Rank
 		var responseInp = $('<input />', {
 			'id'   : 'ranker-' + question.questionId,
+			'data-questionId' : question.questionId,
 			'type' : 'hidden',
 			'class' : 'hidden',
 			'name' : 'responseValue',
 			'value' :  '12345'
 		});
+		responseInp.bind('update', function(e) {redrawRanker(this);});
 		form.append(responseInp);
 		var listdiv = $('<div />');
 		listdiv.append($('<div />', {
@@ -796,11 +809,13 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		answerwidth = 'col-xs-12'; // switch to full width
 		var responseInp = $('<input />', {
 			'id'   : 'ranker-' + question.questionId,
+			'data-questionId' : question.questionId,
 			'type' : 'hidden',
 			'class' : 'hidden',
 			'name' : 'responseValue',
 			'value' :  '123456'
 		});
+		responseInp.bind('update', function(e) {redrawRanker(this);});
 		form.append(responseInp);
 		var listdiv = $('<div />');
 		listdiv.append($('<div />', {
@@ -884,8 +899,10 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'name' : 'responseValue',
 			'value' :  '0'
 		});
-
-		var test = new WorkingOrderTest(question.questionId, pagecount);
+		form.attr('data-direction', question.question.direction);
+		form.attr('data-desc', question.question.description);
+		
+		var test = new WorkingOrderTest(form);
 		var testPanel = $('<div />',{'class':'working-order-display text-center'});
 		testPanel.append(hidden);
 		var display = $('<div />',{'id':'cog_display_' + question.questionId});
@@ -896,7 +913,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn btn-default'});
 		submit.click(function() {test.scoreResponse();});
 		var input = $('<input />',{'id':'cog_input_' + question.questionId,
-			'pattern' : '\d', 'class' : 'form-control', 'disabled' : true});
+			'pattern' : '\\d*', 'class' : 'form-control', 'disabled' : true});
 		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'to get started click start'});
 		testPanel.append(start);
 		testPanel.append(instr);
@@ -1049,7 +1066,9 @@ function saveResponse(response) {
 	responses[response.questionId] = response;
     var field = '#qr' + response.questionId;
     $(field).val(response.id);
-
+    var form = '#question_' + response.questionId;
+    $(form).addClass('completed');
+    
     if (activeSection.allRequired) {
     	updateProgress();
     }
@@ -1122,6 +1141,24 @@ function updateTimer(){
 	}
 }
 
+function redrawRanker(inputField) {
+	var id = $(inputField).attr('data-questionId');
+	var seq = $(inputField).val();
+	var items = $('#sortable-'+id).children();
+	var chars = seq.split('');
+	var lastItem = items[(items.length-1)];
+	for (var i=0;i<chars.length;i++) {
+		for (var j=0;j<items.length;j++) { 
+			if ($(items[j]).attr('data-value') == chars[i]) {
+				$(items[j]).insertAfter(lastItem);
+				lastItem = items[j];
+				break;
+			}
+		}
+	}
+	$('#saverank-'+id).addClass('ranker-saved');
+}
+
 function rankUp(id, num){
 	var items = $('#sortable-'+id).children();
 	var currentIndex = -1; // not found yet
@@ -1175,16 +1212,20 @@ function submitRank(form, id, pagenum) {
 
 
 
+
+
+
+
+
 /*********
  * 
  *   Cognitive Stuff - to be pulled into different place
- * 
+ *   Need to pass in only the form itself..
  */
 
-
-function WorkingOrderTest(questionId, pagecount) {
-	this.questionId = questionId;
-	this.pagecount = pagecount;
+function WorkingOrderTest(form) {
+	this.questionId = $(form).attr('data-questionId');
+	this.pagecount = $(form).attr('data-pagecount');
     this.init();
 }
 
@@ -1220,13 +1261,16 @@ WorkingOrderTest.prototype.show = function() {
     	$('#cog_input_'+id).prop('disabled',false);
     	$('#cog_submit_'+id).prop('disabled',false);
     	$('#cog_instr_'+id).text('Enter digits in increasing order');	
-    	console.log('done showing');
         this.shown = true;
-    }, 2200 + 1400*set.length); 
+    }, 200 + 2000*set.length); 
     
     function delayDisplay(i) {
-        setTimeout(function(){$(target).html(set[i]);},1000 + 1400*i);
-        setTimeout(function(){$(target).html('');},2000 + 1400*i);
+        setTimeout(function(){
+        	$(target).html(set[i]);
+        	},1000 + 2000*i);
+        setTimeout(function(){
+        	$(target).html('');
+        	},2000 + 2000*i);
     }
 }
 

@@ -8,14 +8,7 @@
 		font-size: 18px;
 }
 
-@media (max-width: 332px) {
-	.surveyheader h3 {
-		font-size: 6vw;
-	}
-	.surveyheader i {
-		display: none;
-	}
-}
+
 
 .surveyheader .progress {
 	margin-top: 18px;
@@ -93,180 +86,131 @@
 }
 
 /**
- * 2.0 Stars
+ * 2.0 Required / Incomplete Controls
  * ----------------------------------------------------------------------------
  */
 
-.qpanel div.stars {
-  align: center;
-  display: block;
-}
-input.star { display: none; }
-label.star {
-  font-family: FontAwesome;
-  padding: 10px;
-  font-size: 36px;
-  color: #444;
-  transition: all .2s;
-}
-input.star:checked ~ label.star:before {
-  content: '\f005';
-  color: #FD4;
-  transition: all .25s;
-}
-input.star-5:checked ~ label.star:before {
-  color: #FE7;
-  text-shadow: 0 0 20px #952;
-}
-input.star-1:checked ~ label.star:before { color: #0080ff; }
-label.star:hover { transform: rotate(-15deg) scale(1.3); }
-label.star:before {
-  content: '\f006';
-  font-family: FontAwesome;
-}
-/**
- * 2.1 Likert Boxes
- * ----------------------------------------------------------------------------
- */
-
-.qpanel div.likertboxes {
-  align: center;
-  display: inline;
+form.required .questiontext p:after {
+	content: '*';
+	color: red;
+	vertical-align: super;
 }
 
-div.likertboxes ul
-{
-margin: 0;
-padding: 0;
-list-style-type: none;
-}
-div.likertboxes ul li
-{
-  display: inline-block;
-  width: 19%;
-  font-size: 10px;
-  text-align: center;
+form.completed input[type=range]::-webkit-slider-runnable-track {
+ background: #367ebd;	
 }
 
-input.likertbox { display: none; }
-label.likertbox {
-  font-family: FontAwesome;
-  font-size: 36px;
-  transition: all .2s;
+form.completed input[type=range]::-moz-range-track {
+ background: #367ebd;	
 }
-label.likertbox:before {
-  content: '\f096';
-  color: #2e6da4;
-  font-family: FontAwesome;
-  -webkit-text-stroke-width: 2px;
+form.completed input[type=range]::-ms-fill-upper {
+ background: #367ebd;	
 }
-input.likertbox:checked  + label.likertbox:before {
-  content: '\f0c8';  
-  transition: all .25s;
+form.completed input[type=range]::-ms-fill-lower {
+ background: #367ebd;	
 }
-label.likertbox:hover { 
-	transform: scale(1.3);
- }
+
+form.completed .image-ranker-item {
+    -webkit-box-shadow: 0px 0px 4px 1px #2e6da4;
+    -moz-box-shadow: 0px 0px 4px 1px #2e6da4;
+    box-shadow: 0px 0px 4px 1px #2e6da4;
+}
 
 
 /**
- * 3.0 Thumbs up/down
+ * 3.0 Range Inputs
  * ----------------------------------------------------------------------------
  */
-
-.qpanel div.thumbs {
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 18px 0;
   width: 100%;
-  display: block;
 }
-input.thumbs-up, input.thumbs-down, input.check-square { display: none; }
-label.thumbs-up, label.thumbs-down, label.check-square {
-  font-family: Verdana,FontAwesome;
-  padding: 8px;
-  font-size: 18px;
-  color: #444;
-  transition: all .2s;
+input[type=range]:focus {
+  outline: none;
 }
 
-label.thumbs-up:before { content: '\f087'; padding-right: 10px; }
-input.thumbs-up:checked+label.thumbs-up:before { content: '\f164'; padding-right: 10px; color: #0080ff;}
-
-label.thumbs-down:before { content: '\f088'; padding-right: 10px; }
-input.thumbs-down:checked+label.thumbs-down:before { content: '\f165'; padding-right: 10px; color: #0080ff;}
-input.thumbs-up:checked+label.thumbs-up, input.thumbs-down:checked+label.thumbs-down { color: #0080ff;}
-
-/**
- * 3.1 yesno
- * ----------------------------------------------------------------------------
- */
-
-.yesnoleft, .yesnoright, .yesnocenter {
-}
-
-.yesnocenter {
-	border: #AAAAAA;
-    border-style: none;
-    border-width: 1px;
-	border-right-style: solid;
-	border-left-style: solid;
-}
-
-input.yesbox, input.nobox, input.sometimesbox, input.unknownbox { display: none; }
-label.yesbox, label.nobox, label.sometimesbox, label.unknownbox {
-  padding-top: 3px;
-  font-family: Verdana,FontAwesome;
-  text-align: center;
-  display: block;
+input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
-  font-size: 30px;
-  color: #444;
-  transition: all .2s;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #ccc;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
 }
 
-input.yesbox:checked+label.yesbox { color: green;}
-input.nobox:checked+label.nobox { color: red; }
-input.sometimesbox:checked+label.sometimesbox { color: blue;}
-input.unknownbox:checked+label.unknownbox { color: blue;}
-
-/**
- * 3.5 Likert Scale
- * ----------------------------------------------------------------------------
- */
-
-.qpanel div.likert {
-  align: center;
-  display: block;
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -14px;
 }
-input.likert { display: none; }
-label.likert {
-  font-family: FontAwesome;
-  padding: 10px;
-  font-size: 36px;
-  color: #444;
-  transition: all .2s;
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #367ebd;
 }
-label.likert-1:before, label.likert-2:before {
-  content: '\f119';
-  font-family: FontAwesome;
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #ccc;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
 }
-label.likert-3:before {
-  content: '\f11a';
-  font-family: FontAwesome;
+input[type=range]::-moz-range-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
 }
-label.likert-4:before, label.likert-5:before {
-  content: '\f118';
-  font-family: FontAwesome;
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: transparent;
+  border-color: transparent;
+  border-width: 16px 0;
+  color: transparent;
 }
-
-input.likert-1:checked ~ label.likert-1:before,
-input.likert-2:checked ~ label.likert-2:before,
-input.likert-3:checked ~ label.likert-3:before,
-input.likert-4:checked ~ label.likert-4:before,
-input.likert-5:checked ~ label.likert-5:before {
-  color: #0080ff;
-  transition: all .25s;
+input[type=range]::-ms-fill-lower {
+  background: #ccc;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
 }
-
-
+input[type=range]::-ms-fill-upper {
+  background: #ccc;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+}
+input[type=range]::-ms-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #3071a9;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #367ebd;
+}
 /**
  * 4.0 Checkboxes & radios
  * ----------------------------------------------------------------------------
@@ -334,7 +278,111 @@ input.radio-short:checked+label.radio-short img {
 }
 
 /**
- * 4.5 List Ranking
+ * 4.2 Likert Boxes
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.likertboxes {
+  align: center;
+  display: inline;
+}
+
+div.likertboxes ul
+{
+margin: 0;
+padding: 0;
+list-style-type: none;
+}
+div.likertboxes ul li
+{
+  display: inline-block;
+  width: 19%;
+  font-size: 10px;
+  text-align: center;
+}
+
+input.likertbox { display: none; }
+label.likertbox {
+  font-family: FontAwesome;
+  font-size: 36px;
+  transition: all .2s;
+}
+label.likertbox:before {
+  content: '\f096';
+  color: #2e6da4;
+  font-family: FontAwesome;
+  -webkit-text-stroke-width: 2px;
+}
+input.likertbox:checked  + label.likertbox:before {
+  content: '\f0c8';  
+  transition: all .25s;
+}
+label.likertbox:hover { 
+	transform: scale(1.3);
+ }
+
+/**
+ * 4.3 Thumbs up/down
+ * ----------------------------------------------------------------------------
+ */
+
+.qpanel div.thumbs {
+  width: 100%;
+  display: block;
+}
+input.thumbs-up, input.thumbs-down, input.check-square { display: none; }
+label.thumbs-up, label.thumbs-down, label.check-square {
+  font-family: Verdana,FontAwesome;
+  padding: 8px;
+  font-size: 18px;
+  color: #444;
+  transition: all .2s;
+}
+
+label.thumbs-up:before { content: '\f087'; padding-right: 10px; }
+input.thumbs-up:checked+label.thumbs-up:before { content: '\f164'; padding-right: 10px; color: #0080ff;}
+
+label.thumbs-down:before { content: '\f088'; padding-right: 10px; }
+input.thumbs-down:checked+label.thumbs-down:before { content: '\f165'; padding-right: 10px; color: #0080ff;}
+input.thumbs-up:checked+label.thumbs-up, input.thumbs-down:checked+label.thumbs-down { color: #0080ff;}
+
+/**
+ * 4.4 Yes / No
+ * ----------------------------------------------------------------------------
+ */
+
+
+.yesnoleft, .yesnoright, .yesnocenter {
+}
+
+.yesnocenter {
+	border: #AAAAAA;
+    border-style: none;
+    border-width: 1px;
+	border-right-style: solid;
+	border-left-style: solid;
+}
+
+input.yesbox, input.nobox, input.sometimesbox, input.unknownbox { display: none; }
+label.yesbox, label.nobox, label.sometimesbox, label.unknownbox {
+  padding-top: 3px;
+  font-family: Verdana,FontAwesome;
+  text-align: center;
+  display: block;
+  width: 100%;
+  font-size: 30px;
+  color: #444;
+  transition: all .2s;
+}
+
+input.yesbox:checked+label.yesbox { color: green;}
+input.nobox:checked+label.nobox { color: red; }
+input.sometimesbox:checked+label.sometimesbox { color: blue;}
+input.unknownbox:checked+label.unknownbox { color: blue;}
+
+
+/**
+ * 5.0 List Ranking
  * ----------------------------------------------------------------------------
  */
 
@@ -445,6 +493,10 @@ form.unsubmitted li, form.submitted li {
     content: "\f00c" ;
 }
 
+ol.image-ranker {
+	padding: 0px;
+}
+
 .image-ranker {
 	counter-reset: ranker; 
 }
@@ -454,6 +506,9 @@ form.unsubmitted li, form.submitted li {
 	width: 48%;
 	margin: 1%;
 	float: left;
+	-webkit-box-shadow: 0px 0px 4px 1px #ccc;
+    -moz-box-shadow: 0px 0px 4px 1px #ccc;
+    box-shadow: 0px 0px 4px 1px #ccc;
 }
 
 .image-ranker-item div {
@@ -487,10 +542,15 @@ form.unsubmitted li, form.submitted li {
 }
 
 
-
-
 /**
- * 4.5 Schedules
+ * 9.0 Schedules
+ * ----------------------------------------------------------------------------
+ */
+ 
+ 
+ 
+/**
+ * 9.0 Schedules
  * ----------------------------------------------------------------------------
  */
 .qpanel div.schedule {
@@ -511,8 +571,6 @@ label.check-evening:before { content: '\f186'; }
 input.check-morning:checked+label.check-morning:before,
 input.check-afternoon:checked+label.check-afternoon:before ,
 input.check-evening:checked+label.check-evening:before { color: #0080ff;}
-
-
 
 
 /**
@@ -561,10 +619,21 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
  * 10.0 Responsive elements
  *
  */
-
-@media (min-width: 600px) {
+ 
+ @media (min-width: 600px) {
 	.image-ranker-item {
 	    width: 31%;
 	    margin: 1%;
 	}
 }
+
+@media (max-width: 332px) {
+	.surveyheader h3 {
+		font-size: 6vw;
+	}
+	.surveyheader i {
+		display: none;
+	}
+}
+
+
