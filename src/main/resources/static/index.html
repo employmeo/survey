@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<title>Employmeo | Take Questionnaire</title>
+<title>Questionnaire</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, width=device-width">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,17 +10,18 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 
 <link rel="shortcut icon" type="image/gif" href="/images/favico.gif">
-<link rel="stylesheet" type='text/css' href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-<link rel="stylesheet" type='text/css' href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
-<link rel='stylesheet' type='text/css' href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type='text/css' href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" type='text/css' href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<link rel='stylesheet' type='text/css' href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel='stylesheet' type='text/css' href='https://fonts.googleapis.com/css?family=Comfortaa'>
 <link rel='stylesheet' type='text/css' href='/css/survey_style.css' media='all' />
 
-<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.3/jquery.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?&key=AIzaSyA2bSTr1nfJEneqGPFjpJTASqy8P7cVyrc&libraries=places"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/geocomplete/1.7.0/jquery.geocomplete.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 <script type="text/javascript" src="/js/jquery.mobile.custom.min.js"></script>
 <script type="text/javascript" src='/js/survey_api.js'></script>
 <script type="text/javascript" src='/js/assessment_scripts.js'></script>
@@ -84,9 +85,6 @@
 	</div>
 	<script>
 	$(document).ready(function() {
-		$('#survey').on('swipeleft', function(e) {nextPage();});
-		$('#survey').on('swiperight', function(e) {prevPage();});
-		$('#survey').carousel('pause');
 		launchApp();
 	});
 	</script>

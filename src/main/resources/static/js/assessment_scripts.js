@@ -27,8 +27,20 @@ var servicePath = '/survey/1/';
        urlParams[decode(match[1])] = decode(match[2]);
 })();
 
+function enableSwiping() {
+	$('#survey').on('swipeleft', function(e) { if ("INPUT" != e.target.tagName) nextPage();return false;});
+	$('#survey').on('swiperight', function(e) { if ("INPUT" != e.target.tagName) prevPage();return true;});
+	console.log('Swipe on!');
+}
+
+function disableSwiping() {
+	$('#survey').off("swipeleft swiperight");
+}
+
 function launchApp() {
 	$('#wait').removeClass('hidden');
+	$('#survey').carousel('pause');
+	enableSwiping();
 	if (urlParams.respondant_uuid != null) {
 		getRespondant(urlParams.respondant_uuid);
 	    getRespondantSurvey(urlParams.respondant_uuid);
@@ -395,7 +407,7 @@ function buildSurvey() {
 	});
 	questions = survey.survey.surveyQuestions.sort(function(a,b) {
 		if (a.questionPage == b.questionPage) {
-			return a.questionSequence < b.questionSequence ? -1:1;
+			return a.sequence < b.sequence ? -1:1;
 		} else {
 			return a.questionPage < b.questionPage ? -1:1;
 	}});
@@ -489,8 +501,17 @@ function buildSurveySection(deck, section) {
 			if (responses[i] != null) {
 			    saveResponse(responses[i]);
 			    var radios =$('form[name=question_'+responses[i].questionId+
-    		    '] :input[name=responseValue][value=' + responses[i].responseValue + ']');
-		        $(radios).prop('checked', true);
+    		    '] :input[type=radio][name=responseValue][value=' + responses[i].responseValue + ']');
+			    var checkboxes =$('form[name=question_'+responses[i].questionId+
+		    		    '] :input[type=checkboxes][name=responseValue][value=' + responses[i].responseValue + ']');
+			    var range = $('form[name=question_'+responses[i].questionId+'] :input[type=range][name=responseValue]');
+			    var hidden =$('form[name=question_'+responses[i].questionId+'] :input[type=hidden][name=responseValue]');
+			    
+			    $(radios).prop('checked', true);
+			    $(checkboxes).prop('checked', true);
+			    $(range).val(responses[i].responseValue);
+			    $(hidden).val(responses[i].responseValue);
+			    $(hidden).trigger('update');
 			}
 		}		
 	}
@@ -579,8 +600,7 @@ function getDisplayQuestion(question, qnum) {
 }
 
 function getPlainResponseForm(question, respondant, qcount, pagecount) {
-	var ansblock = $('<div />', {'class' : 'col-xs-12 col-sm-6 col-md-6'});
-
+	var answerwidth = 'col-xs-12 col-sm-6 col-md-6'; // by default answer is on right side of large screens
 	question.question.answers.sort(function(a,b) {
 		return a.displayId < b.displayId ? -1:1;
 	});
@@ -588,8 +608,9 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	var form =  $('<form />', {
 		 'name' : 'question_'+question.questionId,
 		 'id' : 'question_'+question.questionId,
-		 'action' : servicePath + '/response',
-		 'method' : 'POST'
+		 'data-questionId' : question.questionId,
+		 'data-pagecount' : pagecount,
+		 'action' : 'javascript:void(0);'
 	});
 	form.append($('<input/>', {
 		name : 'id',
@@ -686,11 +707,13 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 14: // Rank
 		var responseInp = $('<input />', {
 			'id'   : 'ranker-' + question.questionId,
+			'data-questionId' : question.questionId,
 			'type' : 'hidden',
 			'class' : 'hidden',
 			'name' : 'responseValue',
 			'value' :  '12345'
 		});
+		responseInp.bind('update', function(e) {redrawRanker(this);});
 		form.append(responseInp);
 		var listdiv = $('<div />');
 		listdiv.append($('<div />', {
@@ -757,14 +780,153 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		ansdiv.append(unlikediv);
 		form.append(ansdiv);
 		break;
+	case 16: // Voice
+		break;
+	case 17: // Slider
+		var answerLeft = question.question.answers[0];
+		var answerRight = question.question.answers[1];
+		var leftdiv =  $('<div />',{'class':'col-xs-3', 'text':answerLeft.answerText});
+		var rightdiv =  $('<div />',{'class':'col-xs-3', 'text':answerRight.answerText});
+		var sliderdiv = $('<div />',{'class':'col-xs-6'});
+		var slider = $('<input />', {
+			'id'   : 'range-' + question.questionId,
+			'type' : 'range',
+			'class' : 'slider',
+			'name' : 'responseValue',
+			'max' : answerRight.answerValue,
+			'min' : answerLeft.answerValue,
+			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')'});
+		
+		$(slider).on('input', disableSwiping);
+		$(slider).on('stop', enableSwiping);
+		sliderdiv.append(slider);
+		
+		form.append(leftdiv);
+		form.append(sliderdiv);
+		form.append(rightdiv);
+		break;
+	case 18: // Image Ranker
+		answerwidth = 'col-xs-12'; // switch to full width
+		var responseInp = $('<input />', {
+			'id'   : 'ranker-' + question.questionId,
+			'data-questionId' : question.questionId,
+			'type' : 'hidden',
+			'class' : 'hidden',
+			'name' : 'responseValue',
+			'value' :  '123456'
+		});
+		responseInp.bind('update', function(e) {redrawRanker(this);});
+		form.append(responseInp);
+		var listdiv = $('<div />');
+		listdiv.append($('<div />', {
+			'class' : 'instructions',
+			'text' : 'Drag options to rank most preferred (1) to least (6)'
+		}));
+		var sortablelist = $('<ol />', {
+			'id' : 'sortable-' + question.questionId,
+			'class' : 'image-ranker'});
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
+			var listitem = $('<li />', {
+				'class' : 'image-ranker-item',
+				'data-value' : answer.answerValue
+
+			});
+			var controls = $('<div />', {});
+			controls.append($('<i />', {
+				'class' : 'fa fa-arrow-up',
+				'onClick': 'rankUp('+question.questionId+','+ answer.answerValue+')'
+			}));
+			controls.append($('<span />'));
+			controls.append($('<i />', {
+				'class' : 'fa fa-arrow-down',
+				'onClick': 'rankDown('+question.questionId+','+ answer.answerValue+')'
+			}));
+			listitem.append(controls);
+			listitem.append($('<img />', {'src' : answer.answerMedia}));
+			sortablelist.append(listitem);
+		}
+		sortablelist.sortable({stop: 
+			function(event, ui){updateRankerIndexes(question.questionId);}});
+		
+		listdiv.append(sortablelist);
+
+		listdiv.append($('<div />', {
+			'class' : 'text-right'
+		}).append($('<button />', {
+				'type' : 'button',
+				'id' : 'saverank-' + question.questionId, 
+				'class' : 'ranker-button',
+				'text' : "Save",
+				'onClick':'submitRank(this.form,'+question.questionId+','+pagecount+');',
+				'disabled' : true
+			})));
+		form.append(listdiv);
+		break;
+	case 19: // multichoice image
+		var count = question.question.answers.length;
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
+			var holder = $('<div />',{'class':'col-xs-4'});
+			if ((count == 5) && (ans == 3)) holder.addClass('col-xs-offset-2');
+			var radiolabel = $('<label />', {
+				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'class' : 'radio-short'
+			});
+			radiolabel.append($('<img />', {'src' : answer.answerMedia}));
+			var radiobox = $('<input />', {
+				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'type' : 'radio',
+				'class' : 'radio-short',
+				'name' : 'responseValue',
+				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+				'value' :  answer.answerValue
+			});
+			
+			holder.append(radiobox);
+			holder.append(radiolabel);
+			form.append(holder);
+		}
+		break;
+	case 20: // reference checker
+		break;
+	case 21: // cognitive
+		//answerwidth = 'col-xs-12'; // switch to full width
+		var hidden = $('<input />', {
+			'id'   : 'cog_maxval_' + question.questionId,
+			'type' : 'hidden',
+			'class' : 'hidden',
+			'name' : 'responseValue',
+			'value' :  '0'
+		});
+		form.attr('data-direction', question.question.direction);
+		form.attr('data-desc', question.question.description);
+		
+		var test = new WorkingOrderTest(form);
+		var testPanel = $('<div />',{'class':'working-order-display text-center'});
+		testPanel.append(hidden);
+		var display = $('<div />',{'id':'cog_display_' + question.questionId});
+		testPanel.append(display);
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn btn-default'});
+		start.click(function() {test.show();});
+		var submit= $('<button />', {'id':'cog_submit_' + question.questionId, 
+			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn btn-default'});
+		submit.click(function() {test.scoreResponse();});
+		var input = $('<input />',{'id':'cog_input_' + question.questionId,
+			'pattern' : '\\d*', 'class' : 'form-control', 'disabled' : true});
+		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'to get started click start'});
+		testPanel.append(start);
+		testPanel.append(instr);
+		testPanel.append(input);
+		testPanel.append(submit);
+		form.append(testPanel);
+		form.submit(function(e){test.scoreResponse();});
+		break;
 	case 6: // Multiple Choice (radio)
 	default:
 		// basic multichoice
 		for (var ans=0;ans<question.question.answers.length;ans++) {
 			var answer = question.question.answers[ans];
-			var qrespdiv = $('<div />', {
-				'class' : 'col-xs-12 col-sm-12 col-md-12'
-			});
 			var radiolabel = $('<label />', {
 				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
 				'class' : 'radio-select',
@@ -783,8 +945,9 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			form.append(radiolabel);
 		}
 		break;
-		break;
 	}
+	
+	var ansblock = $('<div />', {'class' : answerwidth });
 	ansblock.append(form);
 	return ansblock;
 }
@@ -903,7 +1066,9 @@ function saveResponse(response) {
 	responses[response.questionId] = response;
     var field = '#qr' + response.questionId;
     $(field).val(response.id);
-
+    var form = '#question_' + response.questionId;
+    $(form).addClass('completed');
+    
     if (activeSection.allRequired) {
     	updateProgress();
     }
@@ -976,6 +1141,24 @@ function updateTimer(){
 	}
 }
 
+function redrawRanker(inputField) {
+	var id = $(inputField).attr('data-questionId');
+	var seq = $(inputField).val();
+	var items = $('#sortable-'+id).children();
+	var chars = seq.split('');
+	var lastItem = items[(items.length-1)];
+	for (var i=0;i<chars.length;i++) {
+		for (var j=0;j<items.length;j++) { 
+			if ($(items[j]).attr('data-value') == chars[i]) {
+				$(items[j]).insertAfter(lastItem);
+				lastItem = items[j];
+				break;
+			}
+		}
+	}
+	$('#saverank-'+id).addClass('ranker-saved');
+}
+
 function rankUp(id, num){
 	var items = $('#sortable-'+id).children();
 	var currentIndex = -1; // not found yet
@@ -1024,4 +1207,108 @@ function submitRank(form, id, pagenum) {
 	$('#saverank-'+id).attr('disabled', true);
 	$('#saverank-'+id).text('Saved');
     submitPlainAnswer(form, pagenum);
+}
+
+
+
+
+
+
+
+
+
+/*********
+ * 
+ *   Cognitive Stuff - to be pulled into different place
+ *   Need to pass in only the form itself..
+ */
+
+function WorkingOrderTest(form) {
+	this.questionId = $(form).attr('data-questionId');
+	this.pagenum = $(form).attr('data-pagecount');
+    this.init();
+}
+
+WorkingOrderTest.prototype.init = function() {
+  this.maxValue = 0;
+  this.currentCount = 3;   //default size = 3
+  this.score = 2; // total number of mistakes allowed
+  this.currentSet = this.generateSet();
+  this.shown = false;
+}
+
+WorkingOrderTest.prototype.generateSet = function() {
+    var arrNumber = [];
+    for (var i=0;i<this.currentCount;i++) {
+    	arrNumber.push(Math.floor(Math.random() * 10));
+    }
+    return arrNumber;
+}
+
+WorkingOrderTest.prototype.show = function() {
+	$('#cog_start_'+this.questionId).prop('disabled',true);
+	$('#cog_input_'+this.questionId).val('');;
+	$('#cog_instr_'+this.questionId).text('');
+	
+	var target = '#cog_display_'+this.questionId;
+    var set = this.currentSet;
+    for (var i = 0; i <this.currentSet.length; i++) {
+    	delayDisplay(i);
+	}
+    
+    var id = this.questionId;
+    setTimeout(function() {
+    	$('#cog_input_'+id).prop('disabled',false);
+    	$('#cog_submit_'+id).prop('disabled',false);
+    	$('#cog_instr_'+id).text('Enter digits in increasing order');	
+        this.shown = true;
+    }, 200 + 2000*set.length); 
+    
+    function delayDisplay(i) {
+        setTimeout(function(){
+        	$(target).html(set[i]);
+        	},1000 + 2000*i);
+        setTimeout(function(){
+        	$(target).html('');
+        	},2000 + 2000*i);
+    }
+}
+
+WorkingOrderTest.prototype.scoreResponse = function() {
+	$('#cog_input_'+this.questionId).prop('disabled',true);
+	$('#cog_submit_'+this.questionId).prop('disabled',true);
+	var responses = $('#cog_input_'+this.questionId).val().split('');
+	var answers = this.currentSet.sort();	
+	for (var i=0;i<answers.length;i++) {
+		if(answers[i] != responses[i]) this.score--;
+	}
+	this.next();
+}
+
+WorkingOrderTest.prototype.next = function() {
+	if (this.score >0) {
+		this.maxValue = this.currentCount;
+		this.currentCount++;
+		this.currentSet = this.generateSet();
+        this.shown = false;
+		//intructions + enable start.
+		$('#cog_instr_'+this.questionId).text('Correct - Click Continue When Ready.');
+		$('#cog_start_'+this.questionId).prop('disabled',false);
+		$('#cog_start_'+this.questionId).text('continue');
+	} else {
+		//disable everything - and tell them they're done - send to server?
+		$('#cog_maxval_'+this.questionId).val(this.maxValue);
+		var fields = $('#question_'+this.questionId).serializeArray();
+		var response = {};
+		for (var i=0;i<fields.length;i++) {
+			response[fields[i].name] = fields[i].value;
+		}
+		var pagenum = this.pagenum;
+		sendResponse(response, function(data) {
+			saveResponse(data);
+			isPageComplete(pagenum);
+			console.log(pagenum);
+		});
+		$('#cog_instr_'+this.questionId).text('You are done. Score: ' + this.maxValue);
+	}
 }
