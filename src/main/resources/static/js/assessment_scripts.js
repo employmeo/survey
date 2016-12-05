@@ -1225,7 +1225,7 @@ function submitRank(form, id, pagenum) {
 
 function WorkingOrderTest(form) {
 	this.questionId = $(form).attr('data-questionId');
-	this.pagecount = $(form).attr('data-pagecount');
+	this.pagenum = $(form).attr('data-pagecount');
     this.init();
 }
 
@@ -1292,8 +1292,9 @@ WorkingOrderTest.prototype.next = function() {
 		this.currentSet = this.generateSet();
         this.shown = false;
 		//intructions + enable start.
-		$('#cog_instr_'+this.questionId).text('Correct - Click Start.');
+		$('#cog_instr_'+this.questionId).text('Correct - Click Continue When Ready.');
 		$('#cog_start_'+this.questionId).prop('disabled',false);
+		$('#cog_start_'+this.questionId).text('continue');
 	} else {
 		//disable everything - and tell them they're done - send to server?
 		$('#cog_maxval_'+this.questionId).val(this.maxValue);
@@ -1306,6 +1307,7 @@ WorkingOrderTest.prototype.next = function() {
 		sendResponse(response, function(data) {
 			saveResponse(data);
 			isPageComplete(pagenum);
+			console.log(pagenum);
 		});
 		$('#cog_instr_'+this.questionId).text('You are done. Score: ' + this.maxValue);
 	}
