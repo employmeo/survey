@@ -225,7 +225,9 @@ public class TwilioResource {
 	    	twiML.append(redirect);
 
         } else {
-	        Play goodbye = new Play(GOODBYE_AUDIO);
+        	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
+        	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;;
+	        Play goodbye = new Play(thankyouMedia);
     	    twiML.append(goodbye);
     	    
     	    // Submit the Survey
