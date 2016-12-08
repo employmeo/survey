@@ -25,7 +25,7 @@
 		<tomcat-version>8.5.3</tomcat-version>
 		<jersey-version>2.23.1</jersey-version>
 		<postgres-version>9.4.1208</postgres-version>
-		<persistence-unit.version>0.0.12</persistence-unit.version>
+		<persistence-unit.version>0.0.14-SNAPSHOT</persistence-unit.version>
 		<commons-math-version>3.6.1</commons-math-version>	
 		<swagger.version>1.5.9</swagger.version>
 	</properties>
