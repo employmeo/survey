@@ -648,6 +648,13 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     background-color:#f88;
 }
 
+.reaction-display .on.black {
+    background-color:#000;
+}
+
+.reaction-display .on.black:active {
+    background-color:#444;
+}
 
 /**
  *

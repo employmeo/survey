@@ -599,6 +599,7 @@ function getDisplayQuestion(question, qnum) {
 			qtextdiv.append($('<p />',{'qnum' : qnum}).append($('<img />',{'src':question.question.questionMedia})));
 			break;
 		case 21: // cognitive
+		case 24: // odd man out
 		case 26: // reaction timer
 			qtextdiv = $('<div />', {'class' : 'col-xs-12 questiontext'});
 		default: // all others
@@ -934,12 +935,15 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		form.append(testPanel);
 		form.submit(function(e){test.scoreResponse();});
 		break;
+	case 24: // odd-man-out
 	case 26: // reaction
 		answerwidth = 'col-xs-12'; // switch to full width
 		form.attr('data-direction', question.question.direction);
 		form.attr('data-desc', question.question.description);
 		
 		var test = new ReactionTimer(form);
+		if (question.question.questionType == 24) test = new OddManOut(form);
+
 		var testPanel = $('<div />',{'class':'reaction-display text-center'});
 		var hidden = $('<input />', {
 			'id'   : 'cog_score_' + question.questionId,
@@ -1429,7 +1433,6 @@ function ReactionTimer(form) {
 	this.running=false;
 	this.questionId = $(form).attr('data-questionId');
 	this.pagenum = $(form).attr('data-pagecount');
-
 }
 
 ReactionTimer.prototype.startTimer = function() {
@@ -1494,3 +1497,121 @@ ReactionTimer.prototype.isDone = function() {
 	}
 	return false;
 }
+
+/*********
+ * 
+ *   Odd Man Out Test
+ *   Direction: 1=one color odd man, 2=select black, 3=two color odd man
+ *   Need to pass in only the form itself..
+ */
+
+OddManOut = function(form) {
+	this.form = form;
+	this.running=false;
+	this.questionId = $(form).attr('data-questionId');
+	this.direction = $(form).attr('data-direction');
+	this.pagenum = $(form).attr('data-pagecount');
+	this.slides = this.getSlides();
+}
+
+OddManOut.prototype.getSlides = function() {
+	var slides = [];
+	slides[0] = [0,0,0,0,0,1,0,0,0,0,0,-1,0,0,-1,0];
+	slides[1] = [1,0,0,0,0,0,-1,0,0,0,0,-1,0,0,-1,0];
+	slides[2] = [-1,-1,0,0,0,-1,0,0,-1,0,0,0,0,0,1,0];
+	slides[3] = [0,1,0,0,0,0,0,0,-1,0,0,0,0,-1,0,0];
+	slides[4] = [0,1,0,0,0,0,0,0,0,-1,0,-1,0,0,-1,0];
+	slides[5] = [0,-1,0,0,0,0,-1,0,1,0,0,-1,0,0,0,0];
+	slides[6] = [0,-1,0,0,0,-1,0,0,-1,0,0,1,0,0,0,0];
+	slides[7] = [0,0,0,-1,1,0,-1,0,0,0,0,-1,0,0,-1,0];
+	slides[8] = [0,0,0,0,1,0,0,0,0,0,0,-1,0,0,-1,0];
+	slides[9] = [1,0,0,0,0,0,0,0,0,-1,0,-1,0,0,-1,0];
+	slides[10] = [-1,0,-1,0,-1,-1,0,0,0,0,0,1,0,0,0,0];
+	slides[11] = [0,0,-1,0,1,0,0,-1,0,0,0,0,0,0,0,0];
+	slides[12] = [0,0,0,0,1,0,-1,0,0,0,0,-1,0,0,-1,0];
+	slides[13] = [0,0,1,0,-1,0,0,0,0,-1,0,0,0,0,-1,0];
+	slides[14] = [0,0,-1,0,-1,-1,0,0,0,0,0,0,0,0,1,0];
+	slides[15] = [0,1,0,0,0,0,0,0,0,-1,0,-1,-1,0,-1,0];
+	return slides;
+}
+
+OddManOut.prototype.startTimer = function() {
+	if(this.isDone() || (this.running)) return;
+	this.running=true;
+	var theTimer = this;
+	this.correct = 0;
+	this.incorrect = 0;
+	//disable start button.
+	$('#reaction_display_'+this.questionId).addClass('running');
+
+	$('#cog_instr_'+this.questionId).text('Click the square that is not touching the others.');
+	if (this.direction == 2) $('#cog_instr_'+this.questionId).text('Click the black square.');
+	$('#cog_start_'+this.questionId).prop('disabled', true);
+    setTimeout(function(){
+    	theTimer.completed();
+    	},20500);
+    setTimeout(function(){
+    	theTimer.nextSlide();
+    	},500);
+}
+
+OddManOut.prototype.nextSlide = function() {
+	$('.on', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('on');});
+	$('.correct', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('correct');});
+	var i = Math.floor(Math.random() * 16)
+	var slide = this.slides[i];
+	var active = [];
+	for (var j=0;j<slide.length;j++) {
+		var square = '#rsquare_' + this.questionId + '_' +j;
+		if (slide[j] != 0) {
+			$(square).addClass('on');
+			active.push(j);
+		}
+		if ((this.direction == 3) && (Math.random()>.5)) $(square).toggleClass('black');
+		if ((this.direction != 2) && (slide[j] == 1)) $(square).addClass('correct');
+	}
+	if (this.direction == 2) {
+		$('.black', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('black');});
+		var j = Math.floor(Math.random() * active.length);
+		$('#rsquare_' + this.questionId + '_' +active[j]).addClass('correct black');
+	}
+}
+
+OddManOut.prototype.clicked = function(square) {
+	if(!this.running) return;
+	if ($(square).hasClass('correct')) {
+		this.correct++;
+	} else {
+		this.incorrect++;
+	}
+	this.nextSlide();
+}
+
+OddManOut.prototype.completed = function() {
+	this.running = false;
+	$('#reaction_display_'+this.questionId).removeClass('running');
+	$('.on', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('on');});
+
+	$('#cog_score_'+this.questionId).val(this.correct);
+	var fields = $('#question_'+this.questionId).serializeArray();
+	var response = {};
+	for (var i=0;i<fields.length;i++) {
+		response[fields[i].name] = fields[i].value;
+	}	
+	var pagenum = this.pagenum;
+	sendResponse(response, function(data) {
+		saveResponse(data);
+		isPageComplete(pagenum);
+	});
+	$('#cog_instr_'+this.questionId).text('Answer Accepted. You Have Completed This Test');	
+}
+
+OddManOut.prototype.isDone = function() {
+	if ($('#qr'+this.questionId).val()) {
+		$('#cog_start_'+this.questionId).prop('disabled', true);
+		$('#cog_instr_'+this.questionId).text('You Have Already Completed This Test');	
+		return true;
+	}
+	return false;
+}
+
