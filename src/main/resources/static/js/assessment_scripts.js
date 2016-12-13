@@ -405,6 +405,9 @@ function buildSurvey() {
 	sections = survey.survey.surveySections.sort(function(a,b) {
 		return a.sectionNumber < b.sectionNumber ? -1:1;
 	});
+	
+	shuffleArray(survey.survey.surveyQuestions);
+	
 	questions = survey.survey.surveyQuestions.sort(function(a,b) {
 		if (a.questionPage == b.questionPage) {
 			return a.sequence < b.sequence ? -1:1;
@@ -574,26 +577,37 @@ function getThankYouPage() {
 
 // create the question / response form
 function getDisplayQuestion(question, qnum) {
-	var qtextdiv = $('<div />', {'class' : 'col-xs-12 col-sm-6 col-md-6 questiontext'})
-
-	if (question.question.questionType == 15) { //change display for alike / unlike
-		qtextdiv.append($('<p />',{
-			'text' : 'Are these two Alike or Unlike',
-			'qnum' : qnum
-		}));
-		qtextdiv.append($('<div />', {
-			'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
-			'text' : question.question.answers[0].answerText
-				}));
-		qtextdiv.append($('<div />', {
-			'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
-			'text' : question.question.answers[1].answerText
-				}));
-	} else {
-		qtextdiv.append($('<p />',{
-			'html' : question.question.questionText,
-			'qnum' : qnum
-		}));
+	var qtextdiv = $('<div />', {'class' : 'col-xs-12 col-sm-6 questiontext'})
+	
+	switch (question.question.questionType) {
+		case 15: // Alike Unlike
+			qtextdiv.append($('<p />',{
+				'text' : 'Are these two Alike or Unlike',
+				'qnum' : qnum
+			}));
+			qtextdiv.append($('<div />', {
+				'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
+				'text' : question.question.answers[0].answerText
+					}));
+			qtextdiv.append($('<div />', {
+				'class' : 'col-xs-6 col-sm-6 col-md-6 questiontext text-center',
+				'text' : question.question.answers[1].answerText
+					}));
+			break;
+		case 23: // stroop image
+		case 22: // image question
+			qtextdiv.append($('<p />',{'qnum' : qnum}).append($('<img />',{'src':question.question.questionMedia})));
+			break;
+		case 21: // cognitive
+		case 26: // reaction timer
+			qtextdiv = $('<div />', {'class' : 'col-xs-12 questiontext'});
+		default: // all others
+			qtextdiv.append($('<p />',{
+				'html' : question.question.questionText,
+				'qnum' : qnum
+			}));
+			break;
+	
 	}
 	
 	return qtextdiv;
@@ -601,9 +615,7 @@ function getDisplayQuestion(question, qnum) {
 
 function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	var answerwidth = 'col-xs-12 col-sm-6 col-md-6'; // by default answer is on right side of large screens
-	question.question.answers.sort(function(a,b) {
-		return a.displayId < b.displayId ? -1:1;
-	});
+	question.question.answers.sort(function(a,b) { return a.displayId < b.displayId ? -1:1;	});
 	
 	var form =  $('<form />', {
 		 'name' : 'question_'+question.questionId,
@@ -670,15 +682,15 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 3: // Schedule (not used)
 	case 4: // Likert (Stars)
 		break;
-	case 5: // Likert (Boxes)
+	case 5: // Likert (5 Boxes)
 		var ansdiv  = $('<div />', {
 			'class' : 'likertboxes'
 		});
 		var list = $('<ul />');
 		var labels = $('<ul />');
-		for (var ans=0;ans<question.question.answers.length;ans++) {
-			var answer = question.question.answers[ans];
-			var i = ans +1;
+		for (var i=0;i<5;i++) {
+			var val = 2 * i + 2;
+			if (question.direction < 0) val = 10 - 2* i;
 			var scale = $('<li />');
 			scale.append($('<input/>',{
 				'class' : 'likertbox likertbox-' + i,
@@ -686,7 +698,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'type': 'radio',
 				'name': "responseValue",
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value': answer.answerValue
+				'value': val
 			}));
 			scale.append($('<label/>',{
 				'class' : 'likertbox likertbox-' + i,
@@ -744,7 +756,6 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			function(event, ui){updateRankerIndexes(question.questionId);}});
 		
 		listdiv.append(sortablelist);
-
 		listdiv.append($('<div />', {
 			'class' : 'text-right'
 		}).append($('<button />', {
@@ -756,7 +767,6 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'disabled' : true
 			})));
 		form.append(listdiv);
-
 		break;
 	case 15: // Alike / Unlike
 		var ansdiv = $('<div />');
@@ -783,11 +793,12 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 16: // Voice
 		break;
 	case 17: // Slider
+		answerwidth = 'col-xs-12'; // switch to full width
 		var answerLeft = question.question.answers[0];
 		var answerRight = question.question.answers[1];
-		var leftdiv =  $('<div />',{'class':'col-xs-3', 'text':answerLeft.answerText});
-		var rightdiv =  $('<div />',{'class':'col-xs-3', 'text':answerRight.answerText});
-		var sliderdiv = $('<div />',{'class':'col-xs-6'});
+		var leftdiv =  $('<div />',{'class':'col-xs-6', 'text':answerLeft.answerText});
+		var rightdiv =  $('<div />',{'class':'col-xs-6 text-right', 'text':answerRight.answerText});
+		var sliderdiv = $('<div />',{'class':'col-xs-12'});
 		var slider = $('<input />', {
 			'id'   : 'range-' + question.questionId,
 			'type' : 'range',
@@ -802,8 +813,8 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		sliderdiv.append(slider);
 		
 		form.append(leftdiv);
-		form.append(sliderdiv);
 		form.append(rightdiv);
+		form.append(sliderdiv);
 		break;
 	case 18: // Image Ranker
 		answerwidth = 'col-xs-12'; // switch to full width
@@ -830,7 +841,6 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			var listitem = $('<li />', {
 				'class' : 'image-ranker-item',
 				'data-value' : answer.answerValue
-
 			});
 			var controls = $('<div />', {});
 			controls.append($('<i />', {
@@ -864,6 +874,8 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		form.append(listdiv);
 		break;
 	case 19: // multichoice image
+	case 22: // image series
+	case 23: // stroop image choices
 		var count = question.question.answers.length;
 		for (var ans=0;ans<question.question.answers.length;ans++) {
 			var answer = question.question.answers[ans];
@@ -891,7 +903,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 20: // reference checker
 		break;
 	case 21: // cognitive
-		//answerwidth = 'col-xs-12'; // switch to full width
+		answerwidth = 'col-xs-12'; // switch to full width
 		var hidden = $('<input />', {
 			'id'   : 'cog_maxval_' + question.questionId,
 			'type' : 'hidden',
@@ -921,6 +933,67 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		testPanel.append(submit);
 		form.append(testPanel);
 		form.submit(function(e){test.scoreResponse();});
+		break;
+	case 26: // reaction
+		answerwidth = 'col-xs-12'; // switch to full width
+		form.attr('data-direction', question.question.direction);
+		form.attr('data-desc', question.question.description);
+		
+		var test = new ReactionTimer(form);
+		var testPanel = $('<div />',{'class':'reaction-display text-center'});
+		var hidden = $('<input />', {
+			'id'   : 'cog_score_' + question.questionId,
+			'type' : 'hidden',
+			'class' : 'hidden',
+			'name' : 'responseValue',
+			'value' :  '0'
+		});
+		testPanel.append(hidden);
+		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'Click Start to Begin'});
+		testPanel.append(instr);
+		
+		var display = $('<div />',{'id':'reaction_display_' + question.questionId});
+		for (var i=0;i<16;i++) {
+			var square = $('<div />',{
+				'class':'timer-square',
+				'id':'rsquare_'+question.questionId+'_'+i,
+				'data-number' : i
+				}).bind('click',function(event){test.clicked(this);});
+			display.append(square);
+		}
+		testPanel.append(display);
+
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'Start', 'class': 'btn btn-default'});
+		start.click(function() {test.startTimer();});
+		testPanel.append(start);
+		form.append(testPanel);
+		break;
+	case 25: // Configurable Likert (Boxes)
+		var ansdiv  = $('<div />', {'class' : 'likertboxes'});
+		var list = $('<ul />');
+		var labels = $('<ul />');
+		for (var i=0;i<question.question.answers.length;i++) {
+			var answer = question.question.answers[i];
+			var scale = $('<li />');
+			scale.append($('<input/>',{
+				'class' : 'likertbox likertbox-' + i,
+				'id' : 'likertbox-' + i + '-' + question.questionId,
+				'type': 'radio',
+				'name': "responseValue",
+				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+				'value': answer.answerValue
+			}));
+			scale.append($('<label/>',{
+				'class' : 'likertbox likertbox-' + i,
+				'for' : 'likertbox-' + i + '-' + question.questionId				
+			}));
+			list.append(scale);
+			labels.append($('<li />', { text : answer.answerText }));
+		}
+
+		ansdiv.append(list);
+		ansdiv.append(labels);
+		form.append(ansdiv);
 		break;
 	case 6: // Multiple Choice (radio)
 	default:
@@ -1209,31 +1282,35 @@ function submitRank(form, id, pagenum) {
     submitPlainAnswer(form, pagenum);
 }
 
-
-
-
-
-
-
-
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
 
 /*********
  * 
  *   Cognitive Stuff - to be pulled into different place
  *   Need to pass in only the form itself..
+ *   
  */
 
 function WorkingOrderTest(form) {
 	this.questionId = $(form).attr('data-questionId');
 	this.pagenum = $(form).attr('data-pagecount');
+	this.direction = $(form).attr('data-direction');
     this.init();
 }
 
-WorkingOrderTest.prototype.init = function() {
+WorkingOrderTest.prototype.init = function(form) {
   this.maxValue = 0;
   this.currentCount = 3;   //default size = 3
   this.score = 2; // total number of mistakes allowed
   this.currentSet = this.generateSet();
+  this.pass = true;
   this.shown = false;
 }
 
@@ -1246,6 +1323,7 @@ WorkingOrderTest.prototype.generateSet = function() {
 }
 
 WorkingOrderTest.prototype.show = function() {
+	if (this.isDone()) return;
 	$('#cog_start_'+this.questionId).prop('disabled',true);
 	$('#cog_input_'+this.questionId).val('');;
 	$('#cog_instr_'+this.questionId).text('');
@@ -1257,10 +1335,15 @@ WorkingOrderTest.prototype.show = function() {
 	}
     
     var id = this.questionId;
+    var forward = (this.direction > 0);
+    var backward = (this.direction < 0);
+    var nosort = (this.direction == 0);
     setTimeout(function() {
     	$('#cog_input_'+id).prop('disabled',false);
     	$('#cog_submit_'+id).prop('disabled',false);
-    	$('#cog_instr_'+id).text('Enter digits in increasing order');	
+    	if (forward) $('#cog_instr_'+id).text('Enter digits in increasing order');
+    	if (backward) $('#cog_instr_'+id).text('Enter digits in descending order');
+    	if (nosort) $('#cog_instr_'+id).text('Enter digits in the order you saw them');	
         this.shown = true;
     }, 200 + 2000*set.length); 
     
@@ -1278,25 +1361,37 @@ WorkingOrderTest.prototype.scoreResponse = function() {
 	$('#cog_input_'+this.questionId).prop('disabled',true);
 	$('#cog_submit_'+this.questionId).prop('disabled',true);
 	var responses = $('#cog_input_'+this.questionId).val().split('');
-	var answers = this.currentSet.sort();	
+	var answers = this.currentSet;
+	this.pass = true;
+	console.log(this.direction, answers);
+	if (this.direction > 0) answers = this.currentSet.sort();
+	if (this.direction < 0) answers = this.currentSet.sort(function(a, b){return b-a});
+	console.log(answers);
 	for (var i=0;i<answers.length;i++) {
-		if(answers[i] != responses[i]) this.score--;
+		if(answers[i] != responses[i]) {
+			this.score--;
+			this.pass = false;
+			break;
+		};
 	}
 	this.next();
 }
 
 WorkingOrderTest.prototype.next = function() {
-	if (this.score >0) {
+	if (this.pass) {
 		this.maxValue = this.currentCount;
-		this.currentCount++;
+		this.currentCount++;		
+	}
+	if (this.score >0) {
 		this.currentSet = this.generateSet();
         this.shown = false;
+        this.pass = true;
 		//intructions + enable start.
-		$('#cog_instr_'+this.questionId).text('Correct - Click Continue When Ready.');
+		$('#cog_instr_'+this.questionId).text('Answer Accepted. Click Continue When Ready.');
 		$('#cog_start_'+this.questionId).prop('disabled',false);
 		$('#cog_start_'+this.questionId).text('continue');
 	} else {
-		//disable everything - and tell them they're done - send to server?
+		// send to to server and disable.
 		$('#cog_maxval_'+this.questionId).val(this.maxValue);
 		var fields = $('#question_'+this.questionId).serializeArray();
 		var response = {};
@@ -1307,8 +1402,95 @@ WorkingOrderTest.prototype.next = function() {
 		sendResponse(response, function(data) {
 			saveResponse(data);
 			isPageComplete(pagenum);
-			console.log(pagenum);
 		});
-		$('#cog_instr_'+this.questionId).text('You are done. Score: ' + this.maxValue);
+		$('#cog_instr_'+this.questionId).text('Answer Accepted. You Have Completed This Test');
 	}
+}
+
+WorkingOrderTest.prototype.isDone = function() {
+	if ($('#qr'+this.questionId).val()) {
+		$('#cog_start_'+this.questionId).prop('disabled', true);
+		$('#cog_submit_'+this.questionId).prop('disabled',true);
+		$('#cog_instr_'+this.questionId).text('Answer Already Accepted. You Have Completed This Test');	
+		return true;
+	}
+	return false;
+}
+
+
+/*********
+ * 
+ *   Simple Reaction time tester
+ *   Need to pass in only the form itself..
+ */
+
+function ReactionTimer(form) {
+	this.form = form;
+	this.running=false;
+	this.questionId = $(form).attr('data-questionId');
+	this.pagenum = $(form).attr('data-pagecount');
+
+}
+
+ReactionTimer.prototype.startTimer = function() {
+	if(this.isDone() || (this.running)) return;
+	this.running=true;
+	var theTimer = this;
+	this.correct = 0;
+	this.incorrect = 0;
+	//disable start button.
+	$('#reaction_display_'+this.questionId).addClass('running');
+	$('#cog_instr_'+this.questionId).text('Click each red square as it lights up.');	
+	$('#cog_start_'+this.questionId).prop('disabled', true);
+    setTimeout(function(){
+    	theTimer.completed();
+    	},20500);
+    setTimeout(function(){
+    	theTimer.nextSquare();
+    	},500);
+}
+
+ReactionTimer.prototype.nextSquare = function() {
+	$('.on', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('on');});
+	var i = Math.floor(Math.random() * 16)
+	var square = '#rsquare_' + this.questionId + '_' +i;
+	$(square).addClass('on');
+}
+
+ReactionTimer.prototype.clicked = function(square) {
+	if(!this.running) return;
+	if ($(square).hasClass('on')) {
+		this.correct++;
+	} else {
+		this.incorrect++;
+	}
+	this.nextSquare();
+}
+
+ReactionTimer.prototype.completed = function() {
+	this.running = false;
+	$('#reaction_display_'+this.questionId).removeClass('running');
+	$('.on', '#reaction_display_'+this.questionId).each(function () {$(this).removeClass('on');});
+
+	$('#cog_score_'+this.questionId).val(this.correct);
+	var fields = $('#question_'+this.questionId).serializeArray();
+	var response = {};
+	for (var i=0;i<fields.length;i++) {
+		response[fields[i].name] = fields[i].value;
+	}	
+	var pagenum = this.pagenum;
+	sendResponse(response, function(data) {
+		saveResponse(data);
+		isPageComplete(pagenum);
+	});
+	$('#cog_instr_'+this.questionId).text('Answer Accepted. You Have Completed This Test');	
+}
+
+ReactionTimer.prototype.isDone = function() {
+	if ($('#qr'+this.questionId).val()) {
+		$('#cog_start_'+this.questionId).prop('disabled', true);
+		$('#cog_instr_'+this.questionId).text('You Have Already Completed This Test');	
+		return true;
+	}
+	return false;
 }
