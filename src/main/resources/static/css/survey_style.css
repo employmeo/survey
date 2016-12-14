@@ -590,6 +590,10 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     font-size: 40px;
     margin:auto;
     text-align: center;
+    height: 58px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-bottom-style: none;
 }
 
 .reaction-display button,

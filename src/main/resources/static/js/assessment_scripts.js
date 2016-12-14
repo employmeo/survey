@@ -35,6 +35,7 @@ function enableSwiping() {
 
 function disableSwiping() {
 	$('#survey').off("swipeleft swiperight");
+	console.log('Swipe off!');
 }
 
 function launchApp() {
@@ -920,10 +921,10 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		testPanel.append(hidden);
 		var display = $('<div />',{'id':'cog_display_' + question.questionId});
 		testPanel.append(display);
-		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn btn-default'});
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn btn-primary'});
 		start.click(function() {test.show();});
 		var submit= $('<button />', {'id':'cog_submit_' + question.questionId, 
-			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn btn-default'});
+			'type':'button', 'disabled' : true, 'text':'submit', 'class': 'btn btn-primary'});
 		submit.click(function() {test.scoreResponse();});
 		var input = $('<input />',{'id':'cog_input_' + question.questionId,
 			'pattern' : '\\d*', 'class' : 'form-control', 'disabled' : true});
@@ -967,7 +968,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		}
 		testPanel.append(display);
 
-		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'Start', 'class': 'btn btn-default'});
+		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'Start', 'class': 'btn btn-primary'});
 		start.click(function() {test.startTimer();});
 		testPanel.append(start);
 		form.append(testPanel);
@@ -1367,10 +1368,8 @@ WorkingOrderTest.prototype.scoreResponse = function() {
 	var responses = $('#cog_input_'+this.questionId).val().split('');
 	var answers = this.currentSet;
 	this.pass = true;
-	console.log(this.direction, answers);
 	if (this.direction > 0) answers = this.currentSet.sort();
 	if (this.direction < 0) answers = this.currentSet.sort(function(a, b){return b-a});
-	console.log(answers);
 	for (var i=0;i<answers.length;i++) {
 		if(answers[i] != responses[i]) {
 			this.score--;
