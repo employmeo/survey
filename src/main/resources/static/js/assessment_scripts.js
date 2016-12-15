@@ -79,6 +79,40 @@ function submitNewRespondant(form) {
 	orderNewAssessment(order);
 }
 
+
+function checkReferenceInput(form, pagenum) {
+	var qid = $(form).attr('data-questionId');
+	var pagenum = $(form).attr('data-pagecount');
+	var email = $('#ref_email_'+qid).val();
+	var name = $('#ref_name_'+qid).val();
+	var hidden = $('#hiddentext_'+qid).val();
+	if (email) {
+		if (!(/^.+@.+\..+$/.test(email))) {
+			$('#email_group_'+qid).addClass('has-error');
+		} else {
+			var combined = email;
+			if (name) combined = name +' <'+email+'>';
+			if (combined != hidden) {
+				$('#hiddentext_'+qid).val(combined);
+				submitPlainAnswer(form, pagenum);
+				console.log('submitted',combined);
+			}			
+		}
+	}
+}
+function splitReference(input) {
+	var hidden = $(input).val();
+	var form = input.form;
+	var qid = $(form).attr('data-questionId');
+	var strings = hidden.split('<');
+	if (strings[1]) {
+		$('#ref_email_'+qid).val(strings[1].substring(0, strings[1].length - 1));
+		$('#ref_name_'+qid).val(strings[0].substring(0, strings[0].length - 1));	
+	} else {
+		$('#ref_email_'+qid).val(hidden);		
+	}
+}
+
 function submitPlainAnswer(form, pagenum) {
 	var fields = $(form).serializeArray();
 	var response = {};
@@ -504,25 +538,33 @@ function buildSurveySection(deck, section) {
 		for (var i=0;i<responses.length;i++) {
 			if (responses[i] != null) {
 			    saveResponse(responses[i]);
-			    var radios =$('form[name=question_'+responses[i].questionId+
-    		    '] :input[type=radio][name=responseValue][value=' + responses[i].responseValue + ']');
-			    var checkboxes =$('form[name=question_'+responses[i].questionId+
-		    		    '] :input[type=checkboxes][name=responseValue][value=' + responses[i].responseValue + ']');
-			    var range = $('form[name=question_'+responses[i].questionId+'] :input[type=range][name=responseValue]');
-			    var hidden =$('form[name=question_'+responses[i].questionId+'] :input[type=hidden][name=responseValue]');
-			    
-			    $(radios).prop('checked', true);
-			    $(checkboxes).prop('checked', true);
-			    $(range).val(responses[i].responseValue);
-			    $(hidden).val(responses[i].responseValue);
-			    $(hidden).trigger('update');
+			    if (responses[i].responseValue) {
+				    var radios =$('form[name=question_'+responses[i].questionId+
+	    		    '] :input[type=radio][name=responseValue][value=' + responses[i].responseValue + ']');
+				    var checkboxes =$('form[name=question_'+responses[i].questionId+
+			    		    '] :input[type=checkboxes][name=responseValue][value=' + responses[i].responseValue + ']');
+				    $(radios).prop('checked', true);
+				    $(checkboxes).prop('checked', true);
+
+				    var range = $('form[name=question_'+responses[i].questionId+'] :input[type=range][name=responseValue]');
+				    var hidden =$('form[name=question_'+responses[i].questionId+'] :input[type=hidden][name=responseValue]');
+				    $(range).val(responses[i].responseValue);
+				    $(hidden).val(responses[i].responseValue);
+				    $(hidden).trigger('update');
+			    }
+			    if (responses[i].responseText) {
+				    var textarea =$('form[name=question_'+responses[i].questionId+']').find('textarea[name=responseText]');
+				    $(textarea).val(responses[i].responseText);
+				    var hidden = $('form[name=question_'+responses[i].questionId+'] :input[type=hidden][name=responseText]');
+				    $(hidden).val(responses[i].responseText);
+				    $(hidden).trigger('update');
+			    }
 			}
 		}		
 	}
 	for (var i=1;i<=totalpages;i++) {
 		isPageComplete(i);
 	}
-
 }
 	
 // Show Assessment Preamble
@@ -573,8 +615,6 @@ function getThankYouPage() {
 
 	return thanks;
 }
-
-
 
 // create the question / response form
 function getDisplayQuestion(question, qnum) {
@@ -644,45 +684,59 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	}));
 
 	switch (question.question.questionType) {
-	case 9: // five short ans
-	case 11: // two short ans
-	case 12: // four short ans
-	case 7: // yes-idk-no
-	case 8: // yes-sometimes-no
-	case 10: // yes-notsure-no
-	case 13: // other, multi-three-choice
-		var ansdiv = $('<div />');
-		for (var ans=0;ans<question.question.answers.length;ans++) {
-			var answer = question.question.answers[ans];
-			var qrespdiv = $('<div />', {
-				'style' : 'padding-right: 1px; padding-left: 1px;',
-				'class' : 'col-xs-4 col-sm-4 col-md-4'
-			});
-			var radiobox = $('<input />', {
-				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
-				'type' : 'radio',
-				'class' : 'radio-short',
-				'name' : 'responseValue',
-				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value' :  answer.answerValue
-			});
-			var radiolabel = $('<label />', {
-				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
-				'class' : 'radio-short',
-				'text'  :  answer.answerText.toUpperCase()
-			});
-		
-			qrespdiv.append(radiobox);
-			qrespdiv.append(radiolabel);
-
-			ansdiv.append(qrespdiv);
-		}
+	case 1: // multiple choice (checkbox)
+		break;
+	case 2: // Thumbs
+		var ansdiv = $('<div />', {'class' : 'form-group'});
+		var like = $('<div />', {'class' : 'col-xs-6 text-center'});
+		var radioLike =	$('<input />', {
+			'id'   : 'radiobox-' + question.questionId +"-1",
+			'type' : 'radio', 'class' : 'thumbs-up',
+			'name': "responseValue",
+			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+			'value' :  '11'});
+		like.append(radioLike);
+		like.append($('<label />', {
+			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'thumbs-up' }));
+		var dislike = $('<div />', {'class' : 'col-xs-6 text-center'});
+		var radioDislike =$('<input />', {
+			'id'   : 'radiobox-' + question.questionId +"-2",
+			'type' : 'radio', 'class' : 'thumbs-down', 
+			'name': "responseValue",
+			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+			'value' :  '1'});
+		dislike.append(radioDislike);
+		dislike.append($('<label />', {
+			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'thumbs-down' }));
+		ansdiv.append(like);
+		ansdiv.append(dislike);
+		ansdiv.append($('<div />', {'class' : 'clearfix'}));
 		form.append(ansdiv);
 		break;
-	case 1: // multiple choice (checkbox)
-	case 2: // Me - Not Me
-	case 3: // Schedule (not used)
-	case 4: // Likert (Stars)
+	case 3: // Schedule
+		break; // above not used
+	case 4: // Likert (5 Stars)
+		var ansdiv = $('<div />', {'class' : 'form-group'});
+		ansdiv.addClass('stars');
+		for (var i=5;i>0;i--) {
+			var ans = 2 * i + 2;
+			if (question.direction < 0) ans = 10 - 2* i;
+			var star =$('<input/>',{
+				'class' : 'star star-' + i,
+				'id' : 'star-' + i + '-' + question.questionId,
+				'type': 'radio',
+				'name': "responseValue",
+				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+				'value': ans
+			});
+			ansdiv.append(star);
+			ansdiv.append($('<label />',{
+				'class' : 'star star-' + i,
+				'for' : 'star-' + i + '-' + question.questionId,
+			}));
+		}
+		ansdiv.append($('<div />', {'class' : 'clearfix'}));
+		form.append(ansdiv);
 		break;
 	case 5: // Likert (5 Boxes)
 		var ansdiv  = $('<div />', {
@@ -716,6 +770,41 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 
 		ansdiv.append(list);
 		ansdiv.append(labels);
+		form.append(ansdiv);
+		break;
+	case 7: // yes-idk-no
+	case 8: // yes-sometimes-no
+	case 9: // five short ans
+	case 10: // yes-notsure-no
+	case 11: // two short ans
+	case 12: // four short ans
+	case 13: // other, multi-three-choice
+		var ansdiv = $('<div />');
+		for (var ans=0;ans<question.question.answers.length;ans++) {
+			var answer = question.question.answers[ans];
+			var qrespdiv = $('<div />', {
+				'style' : 'padding-right: 1px; padding-left: 1px;',
+				'class' : 'col-xs-4 col-sm-4 col-md-4'
+			});
+			var radiobox = $('<input />', {
+				'id'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'type' : 'radio',
+				'class' : 'radio-short',
+				'name' : 'responseValue',
+				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
+				'value' :  answer.answerValue
+			});
+			var radiolabel = $('<label />', {
+				'for'   : 'radiobox-' + question.questionId +"-"+ answer.answerValue,
+				'class' : 'radio-short',
+				'text'  :  answer.answerText.toUpperCase()
+			});
+		
+			qrespdiv.append(radiobox);
+			qrespdiv.append(radiolabel);
+
+			ansdiv.append(qrespdiv);
+		}
 		form.append(ansdiv);
 		break;
 	case 14: // Rank
@@ -903,6 +992,31 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		}
 		break;
 	case 20: // reference checker
+		var namediv = $('<div />', {'class' : 'form-control-group col-xs-6'});
+		namediv.append($('<label />',{'class':'control-label','text' : 'Full Name'}));
+		namediv.append($('<input />', {
+			'class' : 'form-control',
+			'type' : 'text',
+			'name' : 'refName',
+			'id' : 'ref_name_'+question.questionId,
+			'onBlur' : 'checkReferenceInput(this.form)'}));
+		var emaildiv = $('<div />', {'class' : 'form-control-group col-xs-6', 'id' : 'email_group_'+question.questionId});
+		emaildiv.append($('<label />',{'class':'control-label','text' : 'Email'}));
+		emaildiv.append($('<input />', {
+			'class' : 'form-control',
+			'type' : 'email',
+			'name' : 'refEmail',
+			'id' : 'ref_email_'+question.questionId,
+			'onFocus' : '$("#email_group_'+question.questionId+'").removeClass("has-feedback has-error");',
+			'onBlur' : 'checkReferenceInput(this.form,'+pagecount+')'}));
+		var hidden =  $('<input />', {
+			'type' : 'hidden',
+			'name' : 'responseText',
+			'id' : 'hiddentext_'+question.questionId });
+		hidden.bind('update', function(e) {splitReference(this);});
+		form.append(hidden);
+		form.append(namediv);
+		form.append(emaildiv);
 		break;
 	case 21: // cognitive
 		answerwidth = 'col-xs-12'; // switch to full width
@@ -1000,6 +1114,15 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		ansdiv.append(labels);
 		form.append(ansdiv);
 		break;
+	case 27: // notes
+		var ansdiv = $('<div />', { 'class' : 'form-control-group'});
+		var textarea = $('<textarea />', {
+			'class' : 'form-control',
+			'name' : 'responseText',
+			'id' : 'txtarea_'+question.questionId,
+			'onBlur' : 'submitPlainAnswer(this.form,'+pagecount+')'});
+		ansdiv.append(textarea);
+		form.append(ansdiv);
 	case 6: // Multiple Choice (radio)
 	default:
 		// basic multichoice

@@ -322,21 +322,60 @@ label.likertbox:hover {
  }
 
 /**
+ * 4.2.5 Likert Stars
+ * ----------------------------------------------------------------------------
+ */
+div.stars {
+    width: 230px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+input.star { display: none; }
+label.star {
+  float: right;
+  font-family: FontAwesome;
+  padding: 7px;
+  font-size: 32px;
+  color: #444;
+  transition: all .2s;
+}
+input.star:checked ~ label.star:before {
+  content: '\f005';
+  color: #FE7;
+  text-shadow: 0 0 8px #333;
+  transition: all .25s;
+} 
+label.star:hover {
+  color: #FE7;
+  text-shadow: 0 0 8px #333;
+  transform: scale(1.1);
+}
+label.star:before {
+  content: '\f006';
+  font-family: FontAwesome;
+}
+
+/**
  * 4.3 Thumbs up/down
  * ----------------------------------------------------------------------------
  */
-
-.qpanel div.thumbs {
-  width: 100%;
-  display: block;
-}
-input.thumbs-up, input.thumbs-down, input.check-square { display: none; }
-label.thumbs-up, label.thumbs-down, label.check-square {
-  font-family: Verdana,FontAwesome;
-  padding: 8px;
-  font-size: 18px;
+ 
+input.thumbs-up, input.thumbs-down { display: none; }
+label.thumbs-up, label.thumbs-down {
+  font-family: Roboto,Verdana,FontAwesome;
+  text-align: right;
+  background-color: white;
+  border-radius: 100%;
+  height: 45px;
+  width: 45px;
+  font-size: 25px;
+  line-height: 45px;
+  border-style: solid;
+  border-width: 1px;
   color: #444;
   transition: all .2s;
+  padding: 0px;
 }
 
 label.thumbs-up:before { content: '\f087'; padding-right: 10px; }
@@ -345,6 +384,7 @@ input.thumbs-up:checked+label.thumbs-up:before { content: '\f164'; padding-right
 label.thumbs-down:before { content: '\f088'; padding-right: 10px; }
 input.thumbs-down:checked+label.thumbs-down:before { content: '\f165'; padding-right: 10px; color: #0080ff;}
 input.thumbs-up:checked+label.thumbs-up, input.thumbs-down:checked+label.thumbs-down { color: #0080ff;}
+
 
 /**
  * 4.4 Yes / No
