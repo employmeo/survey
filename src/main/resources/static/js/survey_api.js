@@ -4,7 +4,7 @@
 
 
 function getRespondant(uuId) {
-    $.ajax({
+    return $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'respondant/'+uuId,
@@ -14,12 +14,10 @@ function getRespondant(uuId) {
         },
         error: function(data) { showError(data); }
     });
-    
-
 }
 
 function getRespondantByPayrollId(id, asid) {
-    $.ajax({
+    return $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'survey/' + asid + '/respondantbypayroll/' + id,
@@ -32,7 +30,7 @@ function getRespondantByPayrollId(id, asid) {
 }
 
 function orderNewAssessment(order) {
-    $.ajax({
+    return $.ajax({
         type: "POST",
         async: true,
         url: servicePath + 'orderassessment',
@@ -52,7 +50,7 @@ function orderNewAssessment(order) {
 }
 
 function getAccountSurvey(asid, cb) {
-    $.ajax({
+    return $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'survey/' + asid,
@@ -61,8 +59,18 @@ function getAccountSurvey(asid, cb) {
     });
 }
 
+function getAccountSurveyUuid(asuuid, cb) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'survey/uuid/' + asuuid,
+        success: cb,
+        error: function(data) { showError(data); }
+    });
+}
+
 function getRespondantSurvey(uuId) {
-    $.ajax({
+    return $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'respondant/' + uuId + '/getsurvey',
@@ -72,7 +80,7 @@ function getRespondantSurvey(uuId) {
 }
 
 function getResponses(uuId) {
-    $.ajax({
+    return $.ajax({
         type: "GET",
         async: true,
         url: servicePath + 'response/'+uuId,
@@ -115,7 +123,7 @@ function submitSurvey() {
 	if (redirect == null) redirect = '/thankyou.htm';
 	var submission = {};
 	submission.uuid = respondant.respondantUuid;
-    $.ajax({
+    return $.ajax({
         type: "POST",
         async: true,
         url: servicePath + 'submitsurvey',
@@ -133,4 +141,87 @@ function submitSurvey() {
         	}
         }
       });	
+}
+
+function getGrader(uuId) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'grader/'+uuId,
+        success: function(data) { 
+        	grader = data;
+        },
+        error: function(data) { showError(data); }
+    });
+    
+
+}
+
+function getCriteria(uuId) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'grader/'+uuId+'/criteria',
+        success: function(data) { 
+        	criteria = data;
+        },
+        error: function(data) { showError(data); }
+    });
+}
+
+function getGrades(uuId) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'grader/'+uuId+'/grades',
+        success: function(data) { 
+        	grades = data;
+        },
+        error: function(data) { showError(data); }
+    });
+}
+
+function sendGrade(response, cb) {
+    var method = "POST";
+    var grade = {};
+    if (response.id) grade.id = response.id;
+    if (response.questionId) grade.questionId = response.questionId;
+    if (response.respondantId) grade.graderId = response.respondantId;
+    if (response.responseValue) grade.gradeValue = response.responseValue;
+    if (response.responseText) grade.gradeText = response.responseText;   
+    console.log(grade);
+    $.ajax({
+        type: method,
+        async: true,
+        url: servicePath + 'grader/grade',
+        data: JSON.stringify(grade),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
+        success: cb,
+        error: function(data) { console.log(data); } // what to do here?
+  });
+}
+
+function submitGrader() {
+	var redirect = 'http://www.talytica.com/';
+	var submission = {};
+    return $.ajax({
+        type: "POST",
+        async: true,
+        url: servicePath + 'grader/'+grader.uuId+'/submit',
+        success: function(data)
+        {
+        	if (redirect != null) {
+                window.location.assign(redirect);        		
+        	}
+        }
+      });	
+}
+
+function declineGrader() {
+	window.location.assign(servicePath + 'grader/'+grader.uuId+'/decline');        		
 }
