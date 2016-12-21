@@ -647,6 +647,8 @@ function getDisplayQuestion(question, qnum) {
 		case 22: // image question
 			qtextdiv.append($('<p />',{'qnum' : qnum}).append($('<img />',{'src':question.question.questionMedia})));
 			break;
+		case 17: // slider
+		case 18: // image ranker
 		case 21: // cognitive
 		case 24: // odd man out
 		case 26: // reaction timer
@@ -1639,7 +1641,7 @@ ReactionTimer.prototype.isDone = function() {
  *   Need to pass in only the form itself..
  */
 
-OddManOut = function(form) {
+function OddManOut(form) {
 	this.form = form;
 	this.running=false;
 	this.questionId = $(form).attr('data-questionId');
