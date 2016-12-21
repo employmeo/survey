@@ -85,6 +85,11 @@
 	text-align: right;
 }
 
+.required .questiontext p:after  {
+	content: "*";
+	color: red;
+}
+
 /**
  * 2.0 Required / Incomplete Controls
  * ----------------------------------------------------------------------------

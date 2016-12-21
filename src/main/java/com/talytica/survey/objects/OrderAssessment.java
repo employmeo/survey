@@ -1,5 +1,12 @@
 package com.talytica.survey.objects;
 
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@NoArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class OrderAssessment {
   public Long asid;
   public String email;
@@ -12,7 +19,5 @@ public class OrderAssessment {
   public Long positionId;
   public String country_short;
   public String formatted_address;
-  
-  public OrderAssessment() {
-  }
+
 }
