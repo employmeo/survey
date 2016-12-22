@@ -51,12 +51,15 @@ public class GraderResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Gets grader based on uuid", response = Grader.class)
 	   @ApiResponses(value = {
-	     @ApiResponse(code = 200, message = "Grader found")
+	     @ApiResponse(code = 200, message = "Grader found"),
+	     @ApiResponse(code = 404, message = "Grader not found")
 	   })
 	public Response getGraderByUserId(@ApiParam(value = "user id") @PathParam("uuid") @NotNull UUID uuId) {
 		log.debug("Requested grader by uuid {}", uuId);
 
 		Grader grader = graderService.getGraderByUuid(uuId);
+		if (null == grader) Response.status(Status.GONE).entity("Reference Request not found for this ID.").build();
+		if (grader.getStatus() >= 10) return Response.status(Status.GONE).entity("This reference request has already been completed and submitted.").build();
 		return Response.status(Status.OK).entity(grader).build();
 
 	}

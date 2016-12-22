@@ -50,8 +50,8 @@ function launchApp() {
 	if (urlParams.respondant_uuid != null) {
 		getRespondant(urlParams.respondant_uuid);
 	    getRespondantSurvey(urlParams.respondant_uuid);
-	} else if (urlParams.asuuid != null) {
-		getAccountSurveyUuid(urlParams.as_uuid, function(data) {
+	} else if (urlParams.asUuid != null) {
+		getAccountSurveyUuid(urlParams.asUuid, function(data) {
         	survey = data;
             buildStaticLinkView();
         });
@@ -600,12 +600,7 @@ function getThankYouPage() {
 	var thanks = $('<div />', {'class' : 'item'});
 	
 	thanks.append(getHrDiv());
-	if(survey) thanks.append($('<div />', {
-		'class' : 'col-xs-12 col-sm-12 col-md-12',
-		}).html(survey.thankyouText));
-	if(grader) thanks.append($('<div />', {
-		'class' : 'col-xs-12 col-sm-12 col-md-12',
-	}).html('Thank you for completing this feedback form'));
+	thanks.append($('<div />', {'class' : 'col-xs-12'}).html(survey.thankyouText.replace('[CONFIRMATION_CODE]',textID())));
 	thanks.append(getHrDiv());
 	thanks.append(getSurveyNav(null, null, 4));	
 	thanks.attr('page-type',2);
@@ -908,8 +903,8 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'min' : answerLeft.answerValue,
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')'});
 		
-		$(slider).on('input', disableSwiping);
-		$(slider).on('stop', enableSwiping);
+		//$(slider).on('input', disableSwiping);
+		//$(slider).on('stop', enableSwiping);
 		sliderdiv.append(slider);
 		
 		form.append(leftdiv);
@@ -1431,6 +1426,13 @@ function shuffleArray(array) {
         array[i] = array[j];
         array[j] = temp;
     }
+}
+
+
+function textID() {
+	var padded = "000000" + respondant.id;
+	var text = padded.substr(padded.length-7);
+	return text.substr(0, 3) + '-' + text.substr(3, 4);
 }
 
 /*********
