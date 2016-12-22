@@ -85,6 +85,11 @@
 	text-align: right;
 }
 
+.required .questiontext p:after  {
+	content: "*";
+	color: red;
+}
+
 /**
  * 2.0 Required / Incomplete Controls
  * ----------------------------------------------------------------------------
@@ -322,21 +327,60 @@ label.likertbox:hover {
  }
 
 /**
+ * 4.2.5 Likert Stars
+ * ----------------------------------------------------------------------------
+ */
+div.stars {
+    width: 230px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+input.star { display: none; }
+label.star {
+  float: right;
+  font-family: FontAwesome;
+  padding: 7px;
+  font-size: 32px;
+  color: #444;
+  transition: all .2s;
+}
+input.star:checked ~ label.star:before {
+  content: '\f005';
+  color: #FE7;
+  text-shadow: 0 0 8px #333;
+  transition: all .25s;
+} 
+label.star:hover {
+  color: #FE7;
+  text-shadow: 0 0 8px #333;
+  transform: scale(1.1);
+}
+label.star:before {
+  content: '\f006';
+  font-family: FontAwesome;
+}
+
+/**
  * 4.3 Thumbs up/down
  * ----------------------------------------------------------------------------
  */
-
-.qpanel div.thumbs {
-  width: 100%;
-  display: block;
-}
-input.thumbs-up, input.thumbs-down, input.check-square { display: none; }
-label.thumbs-up, label.thumbs-down, label.check-square {
-  font-family: Verdana,FontAwesome;
-  padding: 8px;
-  font-size: 18px;
+ 
+input.thumbs-up, input.thumbs-down { display: none; }
+label.thumbs-up, label.thumbs-down {
+  font-family: Roboto,Verdana,FontAwesome;
+  text-align: right;
+  background-color: white;
+  border-radius: 100%;
+  height: 45px;
+  width: 45px;
+  font-size: 25px;
+  line-height: 45px;
+  border-style: solid;
+  border-width: 1px;
   color: #444;
   transition: all .2s;
+  padding: 0px;
 }
 
 label.thumbs-up:before { content: '\f087'; padding-right: 10px; }
@@ -345,6 +389,7 @@ input.thumbs-up:checked+label.thumbs-up:before { content: '\f164'; padding-right
 label.thumbs-down:before { content: '\f088'; padding-right: 10px; }
 input.thumbs-down:checked+label.thumbs-down:before { content: '\f165'; padding-right: 10px; color: #0080ff;}
 input.thumbs-up:checked+label.thumbs-up, input.thumbs-down:checked+label.thumbs-down { color: #0080ff;}
+
 
 /**
  * 4.4 Yes / No
@@ -541,18 +586,12 @@ ol.image-ranker {
 	cursor: move;
 }
 
-
+ 
 /**
- * 9.0 Schedules
+ * 8.0 Schedules
  * ----------------------------------------------------------------------------
  */
  
- 
- 
-/**
- * 9.0 Schedules
- * ----------------------------------------------------------------------------
- */
 .qpanel div.schedule {
   	display: block;
   	width: 100%;
@@ -574,7 +613,7 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
 
 
 /**
- * 5.0 Cognitive Tests
+ * 9.0 Cognitive Tests
  * ----------------------------------------------------------------------------
  */
  
@@ -596,14 +635,20 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     font-size: 40px;
     margin:auto;
     text-align: center;
+    height: 58px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-bottom-style: none;
 }
 
+.reaction-display button,
 .working-order-display button {
     width: 250px;
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
 }
 
+.reaction-display button,
 .working-order-display span {
     display: block;
     text-align: center;
@@ -613,6 +658,52 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     padding: 3px;
 }
 
+
+/**
+ * 9.1 Reaction Timer
+ * ----------------------------------------------------------------------------
+ */
+ 
+.reaction-display {
+    display: block;
+    background-color: #e9e9e9;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.timer-square {
+    float:left;
+    position: relative;
+    width: 24%;
+    padding-bottom : 24%; /* = width for a 1:1 aspect ratio */
+    margin:0.5%;
+    background-color: #f9f9f9;
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-size:cover;
+    transition: .2s;
+}
+
+.running .timer-square {
+    background-color: #fff;	
+}
+
+.reaction-display .on {
+    background-color:#f00;
+}
+
+.reaction-display .on:active {
+    background-color:#f88;
+}
+
+.reaction-display .on.black {
+    background-color:#000;
+}
+
+.reaction-display .on.black:active {
+    background-color:#444;
+}
 
 /**
  *

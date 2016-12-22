@@ -2,6 +2,7 @@ package com.talytica.survey.resources;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -57,15 +58,36 @@ public class AccountSurveyResource {
 			@ApiParam(value = "survey id") @PathParam("asid") @NotNull Long asid) {
 		log.debug("Requested survey by id {}", asid);		
 		AccountSurvey survey = accountSurveyService.getAccountSurveyById(asid);
-		log.debug("Returning survey by id {} as {}", asid, survey);
 		
 		if(null != survey) {
+			log.debug("Returning survey by id {} as {}", asid, survey.getDisplayName());
+			return Response.status(Status.OK).entity(survey).build();
+		} else {
+			return Response.status(Status.NOT_FOUND).entity("No such assessment found").build();
+		}
+	}
+	
+	@GET
+	@Path("/uuid/{asUuid}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "Gets the survey by provided asUuId", response = AccountSurvey.class)
+	   @ApiResponses(value = {
+	     @ApiResponse(code = 200, message = "Survey found"),
+	     @ApiResponse(code = 404, message = "No such Survey found")
+	   })	
+	public Response getSurveyByUuid(
+			@ApiParam(value = "survey uuid") @PathParam("asUuid") @NotNull UUID asUuid) {
+		log.debug("Requested survey by id {}", asUuid);		
+		AccountSurvey survey = accountSurveyService.getAccountSurveyByUuid(asUuid);
+		
+		if(null != survey) {
+			log.debug("Returning survey by id {} as {}", asUuid, survey.getDisplayName());
 			return Response.status(Status.OK).entity(survey).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).entity("No such assessment found").build();
 		}
 	}	
-
+	
 	@GET
 	@Path("/{asid}/respondantbypayroll/{id}")
 	@ApiOperation(value = "Gets the respondant by asid and payroll id", response = Respondant.class)
