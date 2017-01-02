@@ -14,8 +14,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,16 +30,19 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @PermitAll
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Slf4j
 @Path("/1/orderassessment")
 @Api( value="/1/orderassessment", produces=MediaType.APPLICATION_JSON, consumes=MediaType.APPLICATION_JSON)
 public class OrderAssessmentResource {
-	private static final Logger log = LoggerFactory.getLogger(OrderAssessmentResource.class);
-	
+	private static final Long TOPPERFORMERTARGET = 4l; // for now.
+	private static final Long GETSHIREDTARGET = 1l; // for now.
+
 	@Autowired
 	private PersonService personService;
 	@Autowired
@@ -86,8 +87,17 @@ public class OrderAssessmentResource {
 		respondant.setRespondantStatus(Respondant.STATUS_STARTED);
 		respondant.setStartTime(new Timestamp(new Date().getTime()));
 		respondant.setRespondantUserAgent(reqt.getHeader("User-Agent"));
-			
+		
+		if (as.getBenchmarkId() != null) respondant.setBenchmarkId(as.getBenchmarkId());
+		if (order.type != null) respondant.setType(order.type);
+		
 		Respondant savedRespondant = respondantService.save(respondant);
+		
+		if (respondant.getType() == Respondant.TYPE_BENCHMARK) {
+			respondantService.addOutcomeToRespondant(savedRespondant, GETSHIREDTARGET, true);
+			if (order.topPerformer) respondantService.addOutcomeToRespondant(savedRespondant, TOPPERFORMERTARGET, true);
+		}
+		
 		return Response.status(Status.CREATED).entity(savedRespondant).build();
 	}		
 }

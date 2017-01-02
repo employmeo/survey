@@ -1,0 +1,51 @@
+<div>
+	<div class="col-xs-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 text-center">
+		<h3>Participant Information</h3>
+		<p>
+			Information is used to track participation.
+			Individual results will not be available to 
+			<span id='accountName'>the employer</span>.
+		</p>
+		<hr>
+	</div>
+	<div class="col-xs-12">
+		<form class="form" id='newrespform'
+			action="javascript:submitNewRespondant();">
+			<input type="hidden" id="asid" name="asid">
+			<!-- Signifies Benchmark -->
+			<input type="hidden" name="type" id="type" value="100">
+
+			<div class='form-control-group col-xs-12 col-sm-6'>
+				<label class='control-label' for="fname">First Name:</label>
+				<div class="input-group">
+					<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+					<input class="form-control" type="text" name="fname"
+						placeholder="First Name" required="required">
+				</div>
+			</div>
+			<div class='form-control-group col-xs-12 col-sm-6'>
+				<label for="lname">Last Name:</label>
+				<div class="input-group">
+					<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+					<input class="form-control" type="text" name="lname"
+						placeholder="Last Name" required="required">
+				</div>
+			</div>
+			<div class='form-control-group col-xs-12'>
+				<label for="email">E-mail Address:</label>
+				<div class="input-group">
+					<span class="input-group-addon"><i
+						class="fa fa-envelope fa-fw"></i></span> <input class="form-control"
+						type="email" name="email" placeholder="email" required="required">
+				</div>
+			</div>
+			<div class="col-xs-12 text-center">
+				<hr>
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
+		</form>
+	</div>
+</div>
