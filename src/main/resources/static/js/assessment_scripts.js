@@ -458,6 +458,12 @@ function buildSurveySection(deck, section) {
 	var qpp = 0;
 	card = $('<div />', {'class' : 'questionpage item'});
 	card.append(getHrDiv());
+	
+	if (section.topInstructions) card.append( $('<p />',{
+		'class':'lead text-center',
+		'style':'font-style:italic;',
+		'text' : section.topInstructions
+		}));
 	pagination[pagecount] = new Array();
 	
 	for (var q=0;q<questions.length;q++) {
@@ -473,7 +479,12 @@ function buildSurveySection(deck, section) {
 					pagination[pagecount] = new Array();
 					qpp = 0;
 					card = $('<div />', {'class' : 'questionpage item'});
-					card.append(getHrDiv());				
+					card.append(getHrDiv());
+					if (section.topInstructions) card.append( $('<p />',{
+						'class':'lead text-center',
+						'style':'font-style:italic;',
+						'text' : section.topInstructions
+						}));
 				}
 				var pageqs = pagination[pagecount];
 				pageqs[qpp] = question;
