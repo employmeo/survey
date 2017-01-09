@@ -914,8 +914,6 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'min' : answerLeft.answerValue,
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')'});
 		
-		//$(slider).on('input', disableSwiping);
-		//$(slider).on('stop', enableSwiping);
 		sliderdiv.append(slider);
 		
 		form.append(leftdiv);
