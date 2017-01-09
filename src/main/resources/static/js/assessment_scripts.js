@@ -1047,6 +1047,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		var testPanel = $('<div />',{'class':'working-order-display text-center'});
 		testPanel.append(hidden);
 		var display = $('<div />',{'id':'cog_display_' + question.questionId});
+		display.append( $('<h2 />',{'text' : 'Click start to begin sequence'}));
 		testPanel.append(display);
 		var start= $('<button />', {'id':'cog_start_' + question.questionId, 'type':'button','text':'start', 'class': 'btn btn-primary'});
 		start.click(function() {test.show();});
@@ -1055,9 +1056,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		submit.click(function() {test.scoreResponse();});
 		var input = $('<input />',{'id':'cog_input_' + question.questionId,
 			'pattern' : '\\d*', 'class' : 'form-control', 'disabled' : true});
-		var instr = $('<span />',{'id':'cog_instr_' + question.questionId, 'text' : 'to get started click start'});
 		testPanel.append(start);
-		testPanel.append(instr);
 		testPanel.append(input);
 		testPanel.append(submit);
 		form.append(testPanel);
@@ -1465,6 +1464,19 @@ WorkingOrderTest.prototype.init = function(form) {
   this.currentSet = this.generateSet();
   this.pass = true;
   this.shown = false;
+  this.rightanswer = true; // used in delayed working mem test.
+  this.questions = [ 'Does 4 + 7 = 12?',
+	                 'Are Cheetahs faster than people?',
+	                 'Do four quarters equal a dollar?',
+	                 'Is 5 x 3 greater than 10?',
+	                 'Is a nickel more valuable than a dime?',
+	                 'Does 8 + 5 = 13?',
+	                 'Do cats have four legs?',
+	                 'Is 20 greater than 14 + 7?',
+	                 'Do Dogs always land on their feet?',
+	                 'Does 5 + 4 = 9?' ];
+  this.answers = [false,true,true,true,false,false,true,true,false,true];
+
 }
 
 WorkingOrderTest.prototype.generateSet = function() {
@@ -1475,11 +1487,19 @@ WorkingOrderTest.prototype.generateSet = function() {
     return arrNumber;
 }
 
+WorkingOrderTest.prototype.nextDistractionQuestion = function() {
+	var index = Math.floor(Math.random() * this.questions.length);
+	this.question = this.questions[index];
+	this.answer = this.answers[index];
+	this.rightanswer = true;
+}
+
+
 WorkingOrderTest.prototype.show = function() {
 	if (this.isDone()) return;
 	$('#cog_start_'+this.questionId).prop('disabled',true);
 	$('#cog_input_'+this.questionId).val('');;
-	$('#cog_instr_'+this.questionId).text('');
+	$('#cog_display_'+this.questionId).empty();
 	
 	var target = '#cog_display_'+this.questionId;
     var set = this.currentSet;
@@ -1487,17 +1507,9 @@ WorkingOrderTest.prototype.show = function() {
     	delayDisplay(i);
 	}
     
-    var id = this.questionId;
-    var forward = (this.direction > 0);
-    var backward = (this.direction < 0);
-    var nosort = (this.direction == 0);
+    var test = this;
     setTimeout(function() {
-    	$('#cog_input_'+id).prop('disabled',false);
-    	$('#cog_submit_'+id).prop('disabled',false);
-    	if (forward) $('#cog_instr_'+id).text('Enter digits in increasing order');
-    	if (backward) $('#cog_instr_'+id).text('Enter digits in descending order');
-    	if (nosort) $('#cog_instr_'+id).text('Enter digits in the order you saw them');	
-        this.shown = true;
+        test.sequenceComplete();
     }, 200 + 2000*set.length); 
     
     function delayDisplay(i) {
@@ -1510,17 +1522,47 @@ WorkingOrderTest.prototype.show = function() {
     }
 }
 
+WorkingOrderTest.prototype.sequenceComplete = function() {
+	
+    if (this.direction == 0) $('#cog_display_'+this.questionId).append($('<h2/>',{text:'Enter digits in the order you saw them'}));
+	if (this.direction == 1) $('#cog_display_'+this.questionId).append($('<h2/>',{text:'Enter digits in increasing order'}));
+	if (this.direction == -1) $('#cog_display_'+this.questionId).append($('<h2/>',{text:'Enter digits in descending order'}));
+	if (this.direction == 99) {
+		var test = this;
+		this.nextDistractionQuestion();
+		var truebutton = $('<h3/>',{text:'yes'}).bind('click', function() {test.trueFalseClicked(true)});
+		var falsebutton = $('<h3/>',{text:'no'}).bind('click', function() {test.trueFalseClicked(false)});
+		$('#cog_display_'+this.questionId).append($('<h2/>',{text:this.question}));
+		$('#cog_display_'+this.questionId).append(truebutton);
+		$('#cog_display_'+this.questionId).append(falsebutton);
+	} else {
+		$('#cog_input_'+this.questionId).prop('disabled',false);
+		$('#cog_input_'+this.questionId).focus(); 
+		$('#cog_submit_'+this.questionId).prop('disabled',false);
+	}
+    this.shown = true;
+}
+
+WorkingOrderTest.prototype.trueFalseClicked = function(variable) {
+	this.rightanswer = (variable == this.answer);
+	$('#cog_display_'+this.questionId).empty();
+	$('#cog_display_'+this.questionId).append($('<h2/>',{text:'Enter digits in the order you saw them'}));
+	$('#cog_input_'+this.questionId).prop('disabled',false);
+	$('#cog_input_'+this.questionId).focus(); 
+	$('#cog_submit_'+this.questionId).prop('disabled',false);	
+}
+
 WorkingOrderTest.prototype.scoreResponse = function() {
+	$('#cog_display_'+this.questionId).empty();
 	$('#cog_input_'+this.questionId).prop('disabled',true);
 	$('#cog_submit_'+this.questionId).prop('disabled',true);
 	var responses = $('#cog_input_'+this.questionId).val().split('');
 	var answers = this.currentSet;
 	this.pass = true;
-	if (this.direction > 0) answers = this.currentSet.sort();
-	if (this.direction < 0) answers = this.currentSet.sort(function(a, b){return b-a});
+	if (this.direction == 1) answers = this.currentSet.sort();
+	if (this.direction == -1) answers = this.currentSet.sort(function(a, b){return b-a});
 	for (var i=0;i<answers.length;i++) {
 		if(answers[i] != responses[i]) {
-			this.score--;
 			this.pass = false;
 			break;
 		};
@@ -1529,16 +1571,19 @@ WorkingOrderTest.prototype.scoreResponse = function() {
 }
 
 WorkingOrderTest.prototype.next = function() {
-	if (this.pass) {
+	if (this.pass && this.rightanswer) {
 		this.maxValue = this.currentCount;
-		this.currentCount++;		
+		this.currentCount++;
+	} else {
+		this.score--;
 	}
 	if (this.score >0) {
 		this.currentSet = this.generateSet();
         this.shown = false;
         this.pass = true;
 		//intructions + enable start.
-		$('#cog_instr_'+this.questionId).text('Answer Accepted. Click Continue When Ready.');
+        $('#cog_display_'+this.questionId).append($('<h2/>',{text:'Answer Accepted. Click Continue When Ready.'}));
+		//$('#cog_instr_'+this.questionId).text('Answer Accepted. Click Continue When Ready.');
 		$('#cog_start_'+this.questionId).prop('disabled',false);
 		$('#cog_start_'+this.questionId).text('continue');
 	} else {
@@ -1554,7 +1599,7 @@ WorkingOrderTest.prototype.next = function() {
 			saveResponse(data);
 			isPageComplete(pagenum);
 		});
-		$('#cog_instr_'+this.questionId).text('Answer Accepted. You Have Completed This Test');
+		$('#cog_display_'+this.questionId).append($('<h2/>',{text:'Answer Accepted. You Have Completed This Test'}));
 	}
 }
 
@@ -1562,7 +1607,8 @@ WorkingOrderTest.prototype.isDone = function() {
 	if ($('#qr'+this.questionId).val()) {
 		$('#cog_start_'+this.questionId).prop('disabled', true);
 		$('#cog_submit_'+this.questionId).prop('disabled',true);
-		$('#cog_instr_'+this.questionId).text('Answer Already Accepted. You Have Completed This Test');	
+		$('#cog_display_'+this.questionId).empty();
+		$('#cog_display_'+this.questionId).append($('<h2/>',{text:'Answer Accepted. You Have Completed This Test'}));
 		return true;
 	}
 	return false;

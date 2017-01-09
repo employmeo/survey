@@ -641,6 +641,33 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     border-bottom-style: none;
 }
 
+.working-order-display h2 {
+    position: absolute;
+    width: 250px;
+    margin: 0px;
+    transition: 0.3s;
+}
+
+.working-order-display h3 {
+	display: inline-block;
+	width: 100px;
+	text-transform: uppercase;
+	padding: 3px;
+	border-radius: 2px;
+	border: 1px solid white;
+	color: white;
+	margin: 0 5px 0 5px;
+	transition: 0.3s;
+}
+
+.working-order-display h3:hover {	
+    background-color: white;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+
 .reaction-display button,
 .working-order-display button {
     width: 250px;
