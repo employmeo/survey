@@ -1465,17 +1465,34 @@ WorkingOrderTest.prototype.init = function(form) {
   this.pass = true;
   this.shown = false;
   this.rightanswer = true; // used in delayed working mem test.
+  this.index = 0;
   this.questions = [ 'Does 4 + 7 = 12?',
-	                 'Are Cheetahs faster than people?',
-	                 'Do four quarters equal a dollar?',
-	                 'Is 5 x 3 greater than 10?',
-	                 'Is a nickel more valuable than a dime?',
-	                 'Does 8 + 5 = 13?',
-	                 'Do cats have four legs?',
-	                 'Is 20 greater than 14 + 7?',
-	                 'Do Dogs always land on their feet?',
-	                 'Does 5 + 4 = 9?' ];
-  this.answers = [false,true,true,true,false,false,true,true,false,true];
+                     'Fleas weigh more than airplanes',
+                     'Does (4 / 4)+8=10',
+                     'Winter coats keep you warm',
+                     'Does (8-2)+5=11',
+                     'It is important to walk your car',
+                     'Does (2-3)*4=-4',
+                     'Turtles are faster than race cars',
+                     'Does (8/2) + (9/3)=11',
+                     'Does (3/3)=1',
+                     'Many birds can fly',
+                     'Does ((4-2-1))/4=1/4',
+                     'Does 4 + 7 = 12?',
+                     'Four quarters equals a dollar',
+                     '5X3 is greater than 11',
+                     'A nickel is worth more than a dime',
+                     'Does 8+5 = 13?',
+                     'Do most cats have 4 legs?',
+                     'Is 20 greater than 14 + 7?',
+                     'Dogs can often fly',
+                     'Does 5 + 4 = 9',
+                     'Clouds are heavier than air',
+                     'Cheetahs are faster than people?',
+                     'Does (8*6)-3=46',
+                     'Does (9*4)+(2-0)=40',
+                     'Does (3*9)-8=19' ];
+  this.answers = [ false,false,false,true,true,false,true,false,false,true,true,true,false,true,true,false,true,true,false,false,true,false,true,false,false,true,];
 
 }
 
@@ -1488,10 +1505,10 @@ WorkingOrderTest.prototype.generateSet = function() {
 }
 
 WorkingOrderTest.prototype.nextDistractionQuestion = function() {
-	var index = Math.floor(Math.random() * this.questions.length);
-	this.question = this.questions[index];
-	this.answer = this.answers[index];
+	this.question = this.questions[this.index];
+	this.answer = this.answers[this.index];
 	this.rightanswer = true;
+	this.index++;
 }
 
 
