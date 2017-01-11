@@ -416,10 +416,10 @@ function buildSurvey() {
 			if (questions[q].page == section.sectionNumber) section.qtotal++;
 		}
 		section.complete = false;
-		if (section.allRequired) {
-			section.complete = isAllReqSectionComplete(section.sectionNumber);
-		} else if (section.timeSeconds > 0) {
-			section.complete = isTimedSectionStarted(section.sectionNumber);
+		if (section.timeSeconds > 0) {
+			section.complete = isTimedSectionStarted(section.sectionNumber); // see if one answer already provided.
+		} else {
+			section.complete = isAllReqSectionComplete(section.sectionNumber); // see if all answers already provided.
 		}
 		if ((activeSection == null) && (!section.complete)) activeSection = section;
 	}
