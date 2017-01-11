@@ -418,7 +418,7 @@ function buildSurvey() {
 		section.complete = false;
 		if (section.allRequired) {
 			section.complete = isAllReqSectionComplete(section.sectionNumber);
-		} else if (section.section_timed) {
+		} else if (section.timeSeconds > 0) {
 			section.complete = isTimedSectionStarted(section.sectionNumber);
 		}
 		if ((activeSection == null) && (!section.complete)) activeSection = section;
@@ -1314,6 +1314,8 @@ function startAssessment() {
 		$('#startbutton').text('Continue');
 		$('#startbutton').attr('onClick','nextPage();');
 		nextPage();
+	} else if (!activeSection.allRequired) {
+		nextPage();		
 	} else {
 		$('#honesty').modal();
 	}
