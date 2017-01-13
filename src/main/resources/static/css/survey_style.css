@@ -149,9 +149,9 @@ input[type=range]::-webkit-slider-runnable-track {
 input[type=range]::-webkit-slider-thumb {
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   border: 1px solid #000000;
-  height: 36px;
+  height: 32px;
   width: 16px;
-  border-radius: 3px;
+  border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
   -webkit-appearance: none;
@@ -173,9 +173,9 @@ input[type=range]::-moz-range-track {
 input[type=range]::-moz-range-thumb {
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   border: 1px solid #000000;
-  height: 36px;
+  height: 32px;
   width: 16px;
-  border-radius: 3px;
+  border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
 }
@@ -204,9 +204,9 @@ input[type=range]::-ms-fill-upper {
 input[type=range]::-ms-thumb {
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   border: 1px solid #000000;
-  height: 36px;
+  height: 32px;
   width: 16px;
-  border-radius: 3px;
+  border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
 }
@@ -640,6 +640,33 @@ input.check-evening:checked+label.check-evening:before { color: #0080ff;}
     border-bottom-right-radius: 0px;
     border-bottom-style: none;
 }
+
+.working-order-display h2 {
+    position: absolute;
+    width: 250px;
+    margin: 0px;
+    transition: 0.3s;
+}
+
+.working-order-display h3 {
+	display: inline-block;
+	width: 100px;
+	text-transform: uppercase;
+	padding: 3px;
+	border-radius: 2px;
+	border: 1px solid white;
+	color: white;
+	margin: 0 5px 0 5px;
+	transition: 0.3s;
+}
+
+.working-order-display h3:hover {	
+    background-color: white;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 
 .reaction-display button,
 .working-order-display button {

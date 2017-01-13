@@ -19,5 +19,7 @@ public class OrderAssessment {
   public Long positionId;
   public String country_short;
   public String formatted_address;
+  public Integer type;
+  public Boolean topPerformer = false;
 
 }
