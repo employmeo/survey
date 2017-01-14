@@ -863,9 +863,11 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		responseInp.bind('update', function(e) {redrawRanker(this);});
 		form.append(responseInp);
 		var listdiv = $('<div />');
+		var maxoptions = question.question.answers.length;
+		var draginstructions = 'Drag options to rank most preferred (1) to least (' + maxoptions + ')';
 		listdiv.append($('<div />', {
 			'class' : 'instructions',
-			'text' : 'Drag options to rank most preferred (1) to least (5)'
+			'text' : draginstructions
 		}));
 		var sortablelist = $('<ol />', {
 			'id' : 'sortable-' + question.questionId,
@@ -962,9 +964,11 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		responseInp.bind('update', function(e) {redrawRanker(this);});
 		form.append(responseInp);
 		var listdiv = $('<div />');
+		var maxoptions = question.question.answers.length;
+		var draginstructions = 'Drag options to rank most preferred (1) to least (' + maxoptions + ')';		
 		listdiv.append($('<div />', {
 			'class' : 'instructions',
-			'text' : 'Drag options to rank most preferred (1) to least (6)'
+			'text' : draginstructions
 		}));
 		var sortablelist = $('<ol />', {
 			'id' : 'sortable-' + question.questionId,
