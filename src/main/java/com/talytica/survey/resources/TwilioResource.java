@@ -17,6 +17,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,9 +29,13 @@ import com.employmeo.data.model.Respondant;
 import com.employmeo.data.model.Response;
 import com.employmeo.data.model.Survey;
 import com.employmeo.data.model.SurveyQuestion;
-import com.employmeo.data.model.SurveySection;
 import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
+import com.talytica.common.service.ExternalLinksService;
+import com.talytica.survey.objects.CallMeRequest;
+import com.twilio.sdk.TwilioRestClient;
+import com.twilio.sdk.resource.factory.CallFactory;
+import com.twilio.sdk.resource.instance.Call;
 import com.twilio.sdk.verbs.Play;
 import com.twilio.sdk.verbs.Record;
 import com.twilio.sdk.verbs.Redirect;
@@ -50,12 +56,15 @@ import lombok.extern.slf4j.Slf4j;
 @Api( value="/1/twilio", produces=MediaType.APPLICATION_XML, consumes=MediaType.APPLICATION_FORM_URLENCODED)
 public class TwilioResource {
 	
+	public static final String ACCOUNT_SID = "ACb3a52494a925f62584668bed5d3b32d8"; 
+	public static final String AUTH_TOKEN = "c05e3eef5c79eb06bcbb0ff00a99769e"; 
+	 
 	private final int DEFAULT_RECORDING_LENGTH = 120;
 	private final int VOICE_QUESTION_TYPE = 16;
     private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatch.aifc";
     private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponse.aifc";
     private final String GOODBYE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
-	
+    private final String RETURNTOBROWSER = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
 	
 	@Value("${com.talytica.urls.assessment}")
 	public String BASE_SURVEY_URL;
@@ -65,6 +74,9 @@ public class TwilioResource {
 	
 	@Autowired
 	AccountSurveyService accountSurveyService;
+	
+	//@Autowired
+	//ExternalLinksService externalLinksService;
 	
 	/*******************
 	 * For all voice data Collection using the Twilio API, the following
@@ -189,6 +201,35 @@ public class TwilioResource {
 		
 	}
 	
+	@POST
+	@Path("/callMe")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "Places outbound call")
+	public String callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
+		TwilioRestClient client = new TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN); 
+		Respondant respondant = respondantService.getRespondant(request.uuid);
+		
+		// Build the parameters 
+		List<NameValuePair> params = new ArrayList<NameValuePair>(); 
+		params.add(new BasicNameValuePair("To", request.phoneNumber)); 
+		params.add(new BasicNameValuePair("From", respondant.getAccountSurvey().getPhoneNumber())); 
+		params.add(new BasicNameValuePair("Url", 
+				//externalLinksService.getCallMeLink(respondant)
+				"http://assessment-dev.talytica.com/" +
+				"/survey/1/twilio/" + 
+				respondant.getAccountSurveyId()+"/findbyid?&Digits=" +
+				respondant.getPayrollId()
+				));     
+		//params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getTwilioCallBackLink(respondant)));     
+	 
+		CallFactory callFactory = client.getAccount().getCallFactory(); 
+		Call call = callFactory.create(params); 
+		System.out.println(call.getSid());
+			return null;
+	}
+	
+	
 	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
 	    SurveyQuestion nextQuestion = nextQuestion(respondant);
@@ -224,9 +265,14 @@ public class TwilioResource {
 	    	twiML.append(tryagain);
 	    	twiML.append(redirect);
 
-        } else {
+        } else if (Survey.TYPE_MULTI == respondant.getAccountSurvey().getSurvey().getSurveyType()) {  	
         	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
-        	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;;
+        	if (null == thankyouMedia) thankyouMedia = RETURNTOBROWSER;
+	        Play goodbye = new Play(thankyouMedia);
+    	    twiML.append(goodbye);
+        } else {   	
+        	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
+        	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;
 	        Play goodbye = new Play(thankyouMedia);
     	    twiML.append(goodbye);
     	    
