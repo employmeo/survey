@@ -436,7 +436,36 @@ function buildSurvey() {
 	$('#wait').addClass('hidden');
 }
 
+
+function isSectionAudio(section){
+	var audio = false
+	for (var q=0;q<questions.length;q++) {
+		var question = questions[q];
+		if ((question.page == section.sectionNumber) && (question.question.questionType == 16)) {
+			audio = true;
+			break;
+		}
+	}
+	return audio;
+}
+
+function buildAudioSection(deck,section) {
+	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
+	pagination = new Array();
+	totalpages = 2;
+	var card = getInstructions(section, pagecount, totalpages);
+	card = $('<div />', {'class' : 'questionpage item'});
+	card.append(getHrDiv());
+	
+	card.append(getSurveyNav(pagecount, totalpages,3));	
+	card.attr('page-type',3);
+	card.appendTo(deck);		
+}
+
 function buildSurveySection(deck, section) {
+	
+	if (isSectionAudio(section)) return buildAudioSection(deck,section);
+	
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
 	pagination = new Array();
 	var qlimit = section.questionsPerPage; // questions per page
