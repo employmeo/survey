@@ -9,6 +9,8 @@ import lombok.ToString;
 @ToString
 public class OrderAssessment {
   public Long asid;
+  public String atsId;
+  public String payrollId;
   public String email;
   public String fname;
   public String lname;
