@@ -1,0 +1,39 @@
+<div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<h3>Optional Identification Information</h3>
+		<p>Thank you for participating. All Fields below are Optional, but can help Talytica provide support.
+		Talytica will not use for other purposes</p>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<form class="form" id='newrespform' action="javascript:submitNewRespondant();">
+			<input type="hidden" id="asid" name="asid">
+			<input type="hidden" name="type" id="type" value="100">
+			<label for="payrollId">Mechanical Turk ID:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-amazon fa-fw"></i></span>
+				<input class="form-control"
+					type="text" name="payrollId" id="payrollId" placeholder="Mechanical Turk ID">
+			</div>
+			<label for="fname">First Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-address-card fa-fw"></i></span>
+				<input class="form-control" type="text" name="fname" placeholder="Anonymous" value='Anonymous'>
+			</div>
+			<label for="lname">Last Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-address-card fa-fw"></i></span>
+				<input class="form-control" type="text" name="lname" placeholder="User" value='User'>
+			</div>
+			<div class="col-xs-12 text-center">
+				<hr>
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
+		</form>
+	</div>
+</div>
