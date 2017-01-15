@@ -84,6 +84,9 @@ public class OrderAssessmentResource {
 		respondant.setPositionId(as.getAccount().getDefaultPositionId());
 		if (order.positionId != null) respondant.setPositionId(order.positionId);
 		
+		if (order.payrollId != null) respondant.setPayrollId(order.payrollId);
+		if (order.atsId != null) respondant.setPayrollId(order.atsId);
+		
 		respondant.setRespondantStatus(Respondant.STATUS_STARTED);
 		respondant.setStartTime(new Timestamp(new Date().getTime()));
 		respondant.setRespondantUserAgent(reqt.getHeader("User-Agent"));
