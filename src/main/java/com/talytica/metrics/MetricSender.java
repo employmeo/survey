@@ -1,4 +1,4 @@
-package com.talytica.survey;
+package com.talytica.metrics;
 
 import java.util.Map;
 

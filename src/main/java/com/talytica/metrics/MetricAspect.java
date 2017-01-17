@@ -1,4 +1,4 @@
-package com.talytica.survey;
+package com.talytica.metrics;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

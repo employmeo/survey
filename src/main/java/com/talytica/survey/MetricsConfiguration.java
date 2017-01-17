@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.talytica.metrics.MetricSender;
 
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
