@@ -206,6 +206,25 @@ function sendGrade(response, cb) {
   });
 }
 
+function sendCallMeRequest(request, cb) {
+    var method = "POST";
+    console.log(request);
+    $.ajax({
+        type: method,
+        async: true,
+        url: servicePath + 'twilio/callme',
+        data: JSON.stringify(request),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
+        success: cb,
+        error: function(data) { console.log(data); } // what to do here?
+  });
+}
+
 function submitGrader() {
 	var redirect = 'http://www.talytica.com/';
 	var submission = {};
