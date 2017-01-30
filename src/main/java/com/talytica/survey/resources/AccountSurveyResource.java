@@ -119,7 +119,7 @@ public class AccountSurveyResource {
 				respondantService.save(respondant);
 			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
 				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity(respondant).build();
+				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
 			}
 			
 			log.debug("Returning respondant {}", respondant);
