@@ -257,6 +257,8 @@ label.radio-short, label.radio-select {
 label.radio-short img {
 	width: 100%;
 	height: auto;
+	display: inline!important;
+	pointer-events: none;
 	-webkit-filter: brightness(100%);
 	filter: brightness(100%);
 }

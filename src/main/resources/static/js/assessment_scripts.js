@@ -619,6 +619,10 @@ function getInstructions(section) {
 		'class' : 'col-xs-12 col-sm-12 col-md-12',
 		}).html(section.instructions));
 	instr.append(getHrDiv());
+	if (section.timeSeconds >0) instr.append( $('<label />',{
+		'class':'text-center text-danger', 'style':'display:block;',
+		'text':'WARNING: This section is timed - You cannont use "Continue Later" once started.'}
+	));
 	instr.append(getSurveyNav(2, null, 2));	
 	var savelink = $('<div />', { 'class' : 'col-xs-12 form-group has-feedback'});
 	savelink.append( $('<label />',{'class':'control-label','text':'"Continue Later" Link:'}));
