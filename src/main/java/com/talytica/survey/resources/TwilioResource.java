@@ -214,10 +214,7 @@ public class TwilioResource {
 		List<NameValuePair> params = new ArrayList<NameValuePair>(); 
 		params.add(new BasicNameValuePair("To", request.phoneNumber)); 
 		params.add(new BasicNameValuePair("From", respondant.getAccountSurvey().getPhoneNumber())); 
-		params.add(new BasicNameValuePair("Url", 
-				//externalLinksService.getCallMeLink(respondant)
-				"http://assessment-dev.talytica.com/" +
-				"/survey/1/twilio/" + 
+		params.add(new BasicNameValuePair("Url", BASE_SURVEY_URL + "/survey/1/twilio/" + 
 				respondant.getAccountSurveyId()+"/findbyid?&Digits=" +
 				respondant.getPayrollId()
 				));     
