@@ -21,6 +21,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import com.employmeo.data.model.AccountSurvey;
@@ -75,8 +77,11 @@ public class TwilioResource {
 	@Autowired
 	AccountSurveyService accountSurveyService;
 	
-	//@Autowired
-	//ExternalLinksService externalLinksService;
+	@Autowired
+	ExternalLinksService externalLinksService;
+	
+	@Autowired
+	SimpMessagingTemplate simpMessagingTemplate;
 	
 	/*******************
 	 * For all voice data Collection using the Twilio API, the following
@@ -206,7 +211,7 @@ public class TwilioResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Places outbound call")
-	public String callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
+	public CallMeRequest callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
 		TwilioRestClient client = new TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN); 
 		Respondant respondant = respondantService.getRespondant(request.uuid);
 		
@@ -214,18 +219,32 @@ public class TwilioResource {
 		List<NameValuePair> params = new ArrayList<NameValuePair>(); 
 		params.add(new BasicNameValuePair("To", request.phoneNumber)); 
 		params.add(new BasicNameValuePair("From", respondant.getAccountSurvey().getPhoneNumber())); 
-		params.add(new BasicNameValuePair("Url", BASE_SURVEY_URL + "/survey/1/twilio/" + 
-				respondant.getAccountSurveyId()+"/findbyid?&Digits=" +
-				respondant.getPayrollId()
-				));     
-		//params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getTwilioCallBackLink(respondant)));     
-	 
+		params.add(new BasicNameValuePair("Url", externalLinksService.getCallMeLink(respondant))); 
+		params.add(new BasicNameValuePair("Method", "GET")); 
+	    params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getCallStatusLink()));
+	    params.add(new BasicNameValuePair("StatusCallbackMethod", "POST"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "initiated"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "ringing"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "answered"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "completed"));
+		
 		CallFactory callFactory = client.getAccount().getCallFactory(); 
 		Call call = callFactory.create(params); 
-		System.out.println(call.getSid());
-			return null;
+		log.debug("Outbound call id {}, made to {}",call.getSid(),request.phoneNumber);
+		request.sid = call.getSid();
+		return request;
 	}
-	
+		
+	@POST
+	@Path("/status")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Handles status call-backs about a call")
+	public void broadcastCallStatus(
+			@ApiParam(value = "CallSid") @FormParam("CallSid") String callSid,
+			@ApiParam(value = "CallStatus") @FormParam("CallStatus") String status)  {
+		simpMessagingTemplate.convertAndSend("/calls/"+callSid, status);
+	}
 	
 	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort

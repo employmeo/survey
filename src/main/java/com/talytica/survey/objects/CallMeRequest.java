@@ -14,5 +14,6 @@ public class CallMeRequest {
 
 	public UUID uuid;
 	public String phoneNumber;
+	public String sid;
 
 }

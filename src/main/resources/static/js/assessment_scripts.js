@@ -17,7 +17,7 @@ var grader;
 var grades;
 var criteria;
 var servicePath = '/survey/1/';
-
+var stompClient = null;
 
 (window.onpopstate = function () {
     var match,
@@ -451,16 +451,95 @@ function isSectionAudio(section){
 
 function buildAudioSection(deck,section) {
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
-	pagination = new Array();
+	pagination = [];
+	pagination[pagecount] = [];
+	var pageqs = pagination[pagecount];
+	var qcount = 0;
+	for (var key in questions) {
+		if (questions[key].page != section.sectionNumber) continue;
+		pageqs[qcount] = questions[key];
+		qcount++;
+	}
 	totalpages = 2;
-	var card = getInstructions(section, pagecount, totalpages);
-	card = $('<div />', {'class' : 'questionpage item'});
+	//var card = getInstructions(section, pagecount, totalpages);
+	var card = $('<div />', {'class' : 'questionpage item'});
 	card.append(getHrDiv());
+	card.append($('<div />', {'class' : 'hidden-xs col-sm-4'}));
 	
-	card.append(getSurveyNav(pagecount, totalpages,3));	
+	var form =  $('<form />', {'class':'col-xs-12 col-sm-4 form text-center','name' : 'callme', 'action':'javascript:callMe()'});
+	var phoneLabel = $('<label />', {'text':'Enter 10-digit US phone number:'});
+	form.append(phoneLabel);
+	var inputgroup = $('<div />', {'class' : 'input-group'});
+	inputgroup.append($('<div />', {'class' : 'input-group-addon'}).append(
+			$('<i />', {'class' : 'fa fa-phone'})));
+	var phoneInput = $('<input />', {
+		'class':'form-control input-lg text-center','id':'callMePhone',
+		'name' : 'phone', 'placeholder': '(555) 555-5555','pattern':'^\\(\\d{3}\\)\\s\\d{3}-\\d{4}','required':true});
+	phoneInput.bind('input', function (e) {
+			  var x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+			  e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+		});
+	if (respondant.person.phone) {
+		phoneInput.val(respondant.person.phone);
+		phoneInput.trigger('input');
+	}
+	inputgroup.append(phoneInput);
+	form.append(inputgroup);
+	form.append(getHrDiv());
+	form.append($('<button />', {
+		'id':'callMeButton',
+		'class':'btn btn-block btn-success',
+		'type':'submit', 'text' : 'Call Me'}));
+	
+	form.append(getHrDiv());
+	form.append($('<button />', {
+		'id':'callCompleted',
+		'class':'hidden btn btn-block btn-primary',
+		'type':'button',
+		'onClick' : 'isAudioComplete();',
+		'text' : 'I am done'}));
+	card.append(form);
+	card.append($('<div />', {'class' : 'hidden-xs col-sm-4'}));
+	form.append(getHrDiv());
 	card.attr('page-type',3);
-	card.appendTo(deck);		
+	card.appendTo(deck);
 }
+
+function isAudioComplete() {
+	checkResponses(respondant.respondantUuid);
+	if (isPageComplete(2)) submitSection();
+}
+
+function disconnect() {
+    if (stompClient != null) {
+        stompClient.disconnect();
+    }
+}
+
+function callMe() {
+	
+	$('#callMeButton').prop('disabled',true);
+	$('#callMeButton').text('Dialing ...');
+	$('#callMePhone').prop('disabled',true);
+	var request = {
+			'uuid': respondant.respondantUuid,
+			'phoneNumber' : $('#callMePhone').val()
+	};
+
+	sendCallMeRequest(request, function(data) {
+		$('#callMeButton').text('Connecting ...');
+	    var socket = new SockJS('/stomp-calls');
+	    stompClient = Stomp.over(socket);
+	    stompClient.connect({}, function (frame) {
+	        stompClient.subscribe('/calls/'+data.sid, function (message) {
+	    		$('#callMeButton').text(message.body);
+	    	    console.log('message',message.body);
+	    		$('#callCompleted').removeClass('hidden');
+	        });
+	    });
+	});
+}
+	
 
 function buildSurveySection(deck, section) {
 	
