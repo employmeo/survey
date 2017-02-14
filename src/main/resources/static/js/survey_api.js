@@ -98,6 +98,25 @@ function getResponses(uuId) {
     });
 }
 
+function checkResponses(uuId, cb) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'response/'+uuId,
+        success: function(data) {
+        	// Store Responses by Question ID
+        	responses = new Array();
+        	if (data != null) {
+        		for (var i=0;i<data.length;i++) {
+        			responses[data[i].questionId] = data[i];
+        		}
+        	}
+        	cb();
+        },
+        error: function(data) {}
+    });
+}
+
 function sendResponse(response, cb) {
     var method = "POST";
     if (response.id != null) method="PUT";
@@ -208,11 +227,11 @@ function sendGrade(response, cb) {
 
 function sendCallMeRequest(request, cb) {
     var method = "POST";
-    console.log(request);
+    $('#errorMsg').text();
     $.ajax({
         type: method,
         async: true,
-        url: servicePath + 'twilio/callme',
+        url: servicePath + 'twilio/callMe',
         data: JSON.stringify(request),
         contentType: "application/json",
         headers : {
@@ -221,7 +240,12 @@ function sendCallMeRequest(request, cb) {
         	'Accept': 'application/json'
         },
         success: cb,
-        error: function(data) { console.log(data); } // what to do here?
+        error: function(a,b,data) {
+        	$('#errorMsg').text('Unable to Connect');	
+        	$('#callMeButton').prop('disabled',false);
+        	$('#callMeButton').text('Try Again');
+        	$('#callMePhone').prop('disabled',false);
+		}
   });
 }
 
