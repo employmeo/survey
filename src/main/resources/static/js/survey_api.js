@@ -98,7 +98,7 @@ function getResponses(uuId) {
     });
 }
 
-function checkResponses(uuId) {
+function checkResponses(uuId, cb) {
     return $.ajax({
         type: "GET",
         async: true,
@@ -111,6 +111,7 @@ function checkResponses(uuId) {
         			responses[data[i].questionId] = data[i];
         		}
         	}
+        	cb();
         },
         error: function(data) {}
     });
@@ -226,7 +227,7 @@ function sendGrade(response, cb) {
 
 function sendCallMeRequest(request, cb) {
     var method = "POST";
-    console.log(request);
+    $('#errorMsg').text();
     $.ajax({
         type: method,
         async: true,
@@ -240,10 +241,10 @@ function sendCallMeRequest(request, cb) {
         },
         success: cb,
         error: function(a,b,data) {
+        	$('#errorMsg').text('Unable to Connect');	
         	$('#callMeButton').prop('disabled',false);
         	$('#callMeButton').text('Try Again');
         	$('#callMePhone').prop('disabled',false);
-        	window.alert('An error occured. Please Try Again.');
 		}
   });
 }

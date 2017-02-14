@@ -38,6 +38,7 @@ import com.talytica.survey.objects.CallMeRequest;
 import com.twilio.sdk.TwilioRestClient;
 import com.twilio.sdk.resource.factory.CallFactory;
 import com.twilio.sdk.resource.instance.Call;
+import com.twilio.sdk.verbs.Gather;
 import com.twilio.sdk.verbs.Play;
 import com.twilio.sdk.verbs.Record;
 import com.twilio.sdk.verbs.Redirect;
@@ -63,8 +64,9 @@ public class TwilioResource {
 	 
 	private final int DEFAULT_RECORDING_LENGTH = 120;
 	private final int VOICE_QUESTION_TYPE = 16;
-    private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatch.aifc";
-    private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponse.aifc";
+    private final String COMPLETED_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/InterviewComplete.mp3";
+    private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatchTryAgain.mp3";
+    private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponseTryAgain.mp3";
     private final String GOODBYE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
     private final String RETURNTOBROWSER = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
 	
@@ -175,27 +177,35 @@ public class TwilioResource {
 		Respondant resp = respondantService.getRespondantByAccountSurveyIdAndPayrollId(asId, twiDigits);
 	    TwiMLResponse twiML = new TwiMLResponse();
 	    try {
-
 	    	if (resp != null) {
-	    		AccountSurvey as = resp.getAccountSurvey();
-	    		String preambleMedia = as.getPreambleMedia();
-
-	    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
-		    	twiML.append(found);
-
-	    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
-	    			Play instructions = new Play(preambleMedia);
-	    			twiML.append(instructions);
+	    		if (resp.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
+		    		Play sorry = new Play(COMPLETED_AUDIO);
+		    		twiML.append(sorry);
 	    		} else {
-	    			Say instructions = new Say(as.getPreambleText());
-	    			twiML.append(instructions);
-	    		}       	
-		    	
-	        	nextQuestionTwiML(twiML, resp);
-	 
+		    		AccountSurvey as = resp.getAccountSurvey();
+		    		String preambleMedia = as.getPreambleMedia();
+	
+		    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
+			    	twiML.append(found);
+	
+		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
+		    			Play instructions = new Play(preambleMedia);
+		    			twiML.append(instructions);
+		    		} else {
+		    			Say instructions = new Say(as.getPreambleText());
+		    			twiML.append(instructions);
+		    		}       	
+			    	
+		        	nextQuestionTwiML(twiML, resp);
+	    		}
 	    	} else {
 	    		Play sorry = new Play(NO_MATCH_AUDIO);
+	    		Gather gather = new Gather();
+	    		gather.setAction(BASE_SURVEY_URL+"/survey/1/twilio/"+asId+"/findbyid");
+	    		gather.setMethod("GET");
 	    		twiML.append(sorry);
+	    		twiML.append(gather);
+	    		log.warn("No Match: Caller {} provided id: {} ", twiFrom, twiDigits);
 	    	}
 	    } catch (TwiMLException e) {
 	        e.printStackTrace();

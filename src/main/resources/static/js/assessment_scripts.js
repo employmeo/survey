@@ -461,59 +461,38 @@ function buildAudioSection(deck,section) {
 		qcount++;
 	}
 	totalpages = 2;
-	//var card = getInstructions(section, pagecount, totalpages);
+
 	var card = $('<div />', {'class' : 'questionpage item'});
-	card.append(getHrDiv());
-	card.append($('<div />', {'class' : 'hidden-xs col-sm-4'}));
 	
-	var form =  $('<form />', {'class':'col-xs-12 col-sm-4 form text-center','name' : 'callme', 'action':'javascript:callMe()'});
-	var phoneLabel = $('<label />', {'text':'Enter 10-digit US phone number:'});
-	form.append(phoneLabel);
-	var inputgroup = $('<div />', {'class' : 'input-group'});
-	inputgroup.append($('<div />', {'class' : 'input-group-addon'}).append(
-			$('<i />', {'class' : 'fa fa-phone'})));
-	var phoneInput = $('<input />', {
-		'class':'form-control input-lg text-center','id':'callMePhone',
-		'name' : 'phone', 'placeholder': '(555) 555-5555','pattern':'^\\(\\d{3}\\)\\s\\d{3}-\\d{4}','required':true});
-	phoneInput.bind('input', function (e) {
+	$(card).load('/components/callme.htm', function() {
+		card.attr('page-type',3);
+		card.appendTo(deck);		
+		$('#callMePhone').bind('input', function (e) {
 			  var x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
 			  e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
 		});
-	if (respondant.person.phone) {
-		phoneInput.val(respondant.person.phone);
-		phoneInput.trigger('input');
-	}
-	inputgroup.append(phoneInput);
-	form.append(inputgroup);
-	form.append(getHrDiv());
-	form.append($('<button />', {
-		'id':'callMeButton',
-		'class':'btn btn-block btn-success',
-		'type':'submit', 'text' : 'Call Me'}));
-	
-	form.append(getHrDiv());
-	form.append($('<button />', {
-		'id':'callCompleted',
-		'class':'hidden btn btn-block btn-primary',
-		'type':'button',
-		'onClick' : 'isAudioComplete();',
-		'text' : 'I am done'}));
-	card.append(form);
-	card.append($('<div />', {'class' : 'hidden-xs col-sm-4'}));
-	form.append(getHrDiv());
-	card.attr('page-type',3);
-	card.appendTo(deck);
+		if (respondant.person.phone) {
+			$('#callMePhone').val(respondant.person.phone);
+			$('#callMePhone').trigger('input');
+		}
+		$('#audioInstructions').html(section.instructions);
+		$('#phoneNumber').text(survey.phoneNumber);
+		$('#idnumber').text(respondant.payrollId);
+	})
 }
 
 function isAudioComplete() {
-	checkResponses(respondant.respondantUuid);
-	if (isPageComplete(2)) submitSection();
-}
-
-function disconnect() {
-    if (stompClient != null) {
-        stompClient.disconnect();
-    }
+	checkResponses(respondant.respondantUuid, function () {
+		if (isPageComplete(2)) {
+			submitSection();
+		} else {
+			$('#errorMsg').text('Answers Incomplete - Please Call Again');
+    		$('#callMeButton').text('Try Again');	
+    		$('#callMeButton').prop('disabled',false);
+    		$('#callMePhone').prop('disabled',false);
+    		$('#callCompleted').prop('disabled',false);
+		}		
+	});
 }
 
 function callMe() {
@@ -532,9 +511,34 @@ function callMe() {
 	    stompClient = Stomp.over(socket);
 	    stompClient.connect({}, function (frame) {
 	        stompClient.subscribe('/calls/'+data.sid, function (message) {
-	    		$('#callMeButton').text(message.body);
-	    	    console.log('message',message.body);
-	    		$('#callCompleted').removeClass('hidden');
+	    	    switch (message.body) {
+		    	    case 'ringing':
+			    		$('#callMeButton').text(message.body);	    	    	
+		    	    	break;
+		    	    case 'in-progress':
+		    	    	$('#errorMsg').text();
+			    		$('#callMeButton').text(message.body);
+			    		$('#callCompleted').prop('disabled',true);
+		    	    	break;
+		    	    case 'busy':
+		    	    case 'failed':
+		    	    case 'no-answer':
+		    	    case 'canceled':
+		    	    	$('#errorMsg').text('Unable to Connect');	
+			    		$('#callMeButton').text('Try Again');	
+			    		$('#callMeButton').prop('disabled',false);
+			    		$('#callMePhone').prop('disabled',false);
+			    		$('#callCompleted').prop('disabled',false);
+		    	    	break;
+		    	    case 'completed':
+		    			$('#callMeButton').text('Completed');	    	    	
+		    			isAudioComplete();
+		    	    	break;
+		    	    case 'queued':
+		    	    default:
+		    	    	break;
+	    	    }
+	    	    
 	        });
 	    });
 	});

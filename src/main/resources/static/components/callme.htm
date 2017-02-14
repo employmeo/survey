@@ -1,0 +1,35 @@
+<div class="questionpage item">
+	<div class="col-xs-12">
+		<hr>
+	</div>
+    <div class="col-xs-12" id='audioInstructions'></div>
+    <div class="col-xs-12"><hr></div>
+	<div class="col-xs-hidden col-sm-3"></div>
+	<form class="col-xs-12 col-sm-6 form text-center" name="callme" action="javascript:callMe()">
+		<h4>Enter 10-digit US phone number:</h4>
+		<div class="input-group">
+			<div class="input-group-addon">
+				<i class="fa fa-phone"></i>
+			</div>
+			<input class="form-control input-lg text-center" id="callMePhone"
+				name="phone" placeholder="(555) 555-5555"
+				pattern="^\(\d{3}\)\s\d{3}-\d{4}" required="required" />
+		</div>		
+		<h4>and click</h4>
+		<button id="callMeButton" class="btn btn-block btn-success"
+			type="submit">Call Me</button>
+		<h4 id='errorMsg' class='text-danger text-lg'></h4>
+		<div class="col-xs-12">
+			<h3>- Or -</h3>
+			<h4>Call our line at
+			<span id="phoneNumber" style='font-weight:bold;'>[PHONENUMBER]</span></h4>
+			<h4>Use ID# <span id="idnumber" style='font-weight:bold;'>[IDNUMBER]</span> at the prompt</h4></div>
+		<div class="col-xs-12">
+			<h4>and click "I am done" when finished</h4>
+		</div>
+		<button id="callCompleted" class="btn btn-block btn-primary"
+			type="button" onclick="isAudioComplete();">I am done</button>
+	</form>
+	<div class="col-xs-hidden col-sm-3"></div>
+</div>
+
