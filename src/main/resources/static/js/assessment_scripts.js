@@ -17,7 +17,7 @@ var grader;
 var grades;
 var criteria;
 var servicePath = '/survey/1/';
-
+var stompClient = null;
 
 (window.onpopstate = function () {
     var match,
@@ -451,16 +451,99 @@ function isSectionAudio(section){
 
 function buildAudioSection(deck,section) {
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
-	pagination = new Array();
+	pagination = [];
+	pagination[pagecount] = [];
+	var pageqs = pagination[pagecount];
+	var qcount = 0;
+	for (var key in questions) {
+		if (questions[key].page != section.sectionNumber) continue;
+		pageqs[qcount] = questions[key];
+		qcount++;
+	}
 	totalpages = 2;
-	var card = getInstructions(section, pagecount, totalpages);
-	card = $('<div />', {'class' : 'questionpage item'});
-	card.append(getHrDiv());
+
+	var card = $('<div />', {'class' : 'questionpage item'});
 	
-	card.append(getSurveyNav(pagecount, totalpages,3));	
-	card.attr('page-type',3);
-	card.appendTo(deck);		
+	$(card).load('/components/callme.htm', function() {
+		card.attr('page-type',3);
+		card.appendTo(deck);		
+		$('#callMePhone').bind('input', function (e) {
+			  var x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+			  e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+		});
+		if (respondant.person.phone) {
+			$('#callMePhone').val(respondant.person.phone);
+			$('#callMePhone').trigger('input');
+		}
+		$('#audioInstructions').html(section.instructions);
+		$('#phoneNumber').text(survey.phoneNumber);
+		$('#idnumber').text(respondant.payrollId);
+	})
 }
+
+function isAudioComplete() {
+	checkResponses(respondant.respondantUuid, function () {
+		if (isPageComplete(2)) {
+			submitSection();
+		} else {
+			$('#errorMsg').text('Answers Incomplete - Please Call Again');
+    		$('#callMeButton').text('Try Again');	
+    		$('#callMeButton').prop('disabled',false);
+    		$('#callMePhone').prop('disabled',false);
+    		$('#callCompleted').prop('disabled',false);
+		}		
+	});
+}
+
+function callMe() {
+	
+	$('#callMeButton').prop('disabled',true);
+	$('#callMeButton').text('Dialing ...');
+	$('#callMePhone').prop('disabled',true);
+	var request = {
+			'uuid': respondant.respondantUuid,
+			'phoneNumber' : $('#callMePhone').val()
+	};
+
+	sendCallMeRequest(request, function(data) {
+		$('#callMeButton').text('Connecting ...');
+	    var socket = new SockJS('/stomp-calls');
+	    stompClient = Stomp.over(socket);
+	    stompClient.connect({}, function (frame) {
+	        stompClient.subscribe('/calls/'+data.sid, function (message) {
+	    	    switch (message.body) {
+		    	    case 'ringing':
+			    		$('#callMeButton').text(message.body);	    	    	
+		    	    	break;
+		    	    case 'in-progress':
+		    	    	$('#errorMsg').text();
+			    		$('#callMeButton').text(message.body);
+			    		$('#callCompleted').prop('disabled',true);
+		    	    	break;
+		    	    case 'busy':
+		    	    case 'failed':
+		    	    case 'no-answer':
+		    	    case 'canceled':
+		    	    	$('#errorMsg').text('Unable to Connect');	
+			    		$('#callMeButton').text('Try Again');	
+			    		$('#callMeButton').prop('disabled',false);
+			    		$('#callMePhone').prop('disabled',false);
+			    		$('#callCompleted').prop('disabled',false);
+		    	    	break;
+		    	    case 'completed':
+		    			$('#callMeButton').text('Completed');	    	    	
+		    			isAudioComplete();
+		    	    	break;
+		    	    case 'queued':
+		    	    default:
+		    	    	break;
+	    	    }
+	    	    
+	        });
+	    });
+	});
+}
+	
 
 function buildSurveySection(deck, section) {
 	

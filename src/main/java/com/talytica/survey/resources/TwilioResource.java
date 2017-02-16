@@ -21,6 +21,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import com.employmeo.data.model.AccountSurvey;
@@ -36,6 +38,7 @@ import com.talytica.survey.objects.CallMeRequest;
 import com.twilio.sdk.TwilioRestClient;
 import com.twilio.sdk.resource.factory.CallFactory;
 import com.twilio.sdk.resource.instance.Call;
+import com.twilio.sdk.verbs.Gather;
 import com.twilio.sdk.verbs.Play;
 import com.twilio.sdk.verbs.Record;
 import com.twilio.sdk.verbs.Redirect;
@@ -61,8 +64,9 @@ public class TwilioResource {
 	 
 	private final int DEFAULT_RECORDING_LENGTH = 120;
 	private final int VOICE_QUESTION_TYPE = 16;
-    private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatch.aifc";
-    private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponse.aifc";
+    private final String COMPLETED_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/InterviewComplete.mp3";
+    private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatchTryAgain.mp3";
+    private final String NO_RESPONSE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/NoResponseTryAgain.mp3";
     private final String GOODBYE_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
     private final String RETURNTOBROWSER = "https://s3.amazonaws.com/talytica/media/audio/Goodbye.aifc";
 	
@@ -75,8 +79,11 @@ public class TwilioResource {
 	@Autowired
 	AccountSurveyService accountSurveyService;
 	
-	//@Autowired
-	//ExternalLinksService externalLinksService;
+	@Autowired
+	ExternalLinksService externalLinksService;
+	
+	@Autowired
+	SimpMessagingTemplate simpMessagingTemplate;
 	
 	/*******************
 	 * For all voice data Collection using the Twilio API, the following
@@ -170,27 +177,35 @@ public class TwilioResource {
 		Respondant resp = respondantService.getRespondantByAccountSurveyIdAndPayrollId(asId, twiDigits);
 	    TwiMLResponse twiML = new TwiMLResponse();
 	    try {
-
 	    	if (resp != null) {
-	    		AccountSurvey as = resp.getAccountSurvey();
-	    		String preambleMedia = as.getPreambleMedia();
-
-	    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
-		    	twiML.append(found);
-
-	    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
-	    			Play instructions = new Play(preambleMedia);
-	    			twiML.append(instructions);
+	    		if (resp.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
+		    		Play sorry = new Play(COMPLETED_AUDIO);
+		    		twiML.append(sorry);
 	    		} else {
-	    			Say instructions = new Say(as.getPreambleText());
-	    			twiML.append(instructions);
-	    		}       	
-		    	
-	        	nextQuestionTwiML(twiML, resp);
-	 
+		    		AccountSurvey as = resp.getAccountSurvey();
+		    		String preambleMedia = as.getPreambleMedia();
+	
+		    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
+			    	twiML.append(found);
+	
+		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
+		    			Play instructions = new Play(preambleMedia);
+		    			twiML.append(instructions);
+		    		} else {
+		    			Say instructions = new Say(as.getPreambleText());
+		    			twiML.append(instructions);
+		    		}       	
+			    	
+		        	nextQuestionTwiML(twiML, resp);
+	    		}
 	    	} else {
 	    		Play sorry = new Play(NO_MATCH_AUDIO);
+	    		Gather gather = new Gather();
+	    		gather.setAction(BASE_SURVEY_URL+"/survey/1/twilio/"+asId+"/findbyid");
+	    		gather.setMethod("GET");
 	    		twiML.append(sorry);
+	    		twiML.append(gather);
+	    		log.warn("No Match: Caller {} provided id: {} ", twiFrom, twiDigits);
 	    	}
 	    } catch (TwiMLException e) {
 	        e.printStackTrace();
@@ -206,7 +221,7 @@ public class TwilioResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Places outbound call")
-	public String callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
+	public CallMeRequest callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
 		TwilioRestClient client = new TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN); 
 		Respondant respondant = respondantService.getRespondant(request.uuid);
 		
@@ -214,18 +229,32 @@ public class TwilioResource {
 		List<NameValuePair> params = new ArrayList<NameValuePair>(); 
 		params.add(new BasicNameValuePair("To", request.phoneNumber)); 
 		params.add(new BasicNameValuePair("From", respondant.getAccountSurvey().getPhoneNumber())); 
-		params.add(new BasicNameValuePair("Url", BASE_SURVEY_URL + "/survey/1/twilio/" + 
-				respondant.getAccountSurveyId()+"/findbyid?&Digits=" +
-				respondant.getPayrollId()
-				));     
-		//params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getTwilioCallBackLink(respondant)));     
-	 
+		params.add(new BasicNameValuePair("Url", externalLinksService.getCallMeLink(respondant))); 
+		params.add(new BasicNameValuePair("Method", "GET")); 
+	    params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getCallStatusLink()));
+	    params.add(new BasicNameValuePair("StatusCallbackMethod", "POST"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "initiated"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "ringing"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "answered"));
+	    params.add(new BasicNameValuePair("StatusCallbackEvent", "completed"));
+		
 		CallFactory callFactory = client.getAccount().getCallFactory(); 
 		Call call = callFactory.create(params); 
-		System.out.println(call.getSid());
-			return null;
+		log.debug("Outbound call id {}, made to {}",call.getSid(),request.phoneNumber);
+		request.sid = call.getSid();
+		return request;
 	}
-	
+		
+	@POST
+	@Path("/status")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Handles status call-backs about a call")
+	public void broadcastCallStatus(
+			@ApiParam(value = "CallSid") @FormParam("CallSid") String callSid,
+			@ApiParam(value = "CallStatus") @FormParam("CallStatus") String status)  {
+		simpMessagingTemplate.convertAndSend("/calls/"+callSid, status);
+	}
 	
 	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
