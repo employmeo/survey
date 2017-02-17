@@ -11,7 +11,7 @@
 		<hr>
 	</div>
 	<div class="col-xs-12 col-sm-12 col-md-12">
-		<form class="form" id='newrespform' action="javascript:submitNewRespondant();">
+		<form class="form" id='newrespform' onsubmit="submitNewRespondant();return false;">
 			<input type="hidden" id="asid" name="asid">
 			<input type="hidden" name="type" id="type" value="100">
 			<label for="payrollId">Mechanical Turk ID:</label>
