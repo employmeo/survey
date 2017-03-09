@@ -20,7 +20,10 @@ import javax.ws.rs.core.Response.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.employmeo.data.model.Account;
 import com.employmeo.data.model.AccountSurvey;
+import com.employmeo.data.model.Location;
+import com.employmeo.data.model.Position;
 import com.employmeo.data.model.Respondant;
 import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
@@ -130,5 +133,44 @@ public class AccountSurveyResource {
 		return Response.status(Status.NOT_FOUND).entity("Unable to find assessment for this id.").build();
 
 	}
+	
+	@GET
+	@ApiOperation(value = "Gets the list of locations based on survey uuid", response = Location.class, responseContainer = "List")
+	   @ApiResponses(value = {
+			     @ApiResponse(code = 200, message = "Locations found"),
+			     @ApiResponse(code = 404, message = "No such Account Survey found")
+		})
+	@Path("/{asUuid}/locations")
+	public Response getLocations(@ApiParam(value = "aas uuid") @PathParam("asUuid") @NotNull UUID asUuid) {
+		log.debug("Requested locations with AS uuid {}", asUuid);
+		AccountSurvey aSurvey = accountSurveyService.getAccountSurveyByUuid(asUuid);
 
+		if(null != aSurvey) {
+			Account account = aSurvey.getAccount();
+			log.debug("Returning locations for account id {}", account.getId());
+			return Response.status(Status.OK).entity(account.getLocations()).build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}	
+	
+	@GET
+	@ApiOperation(value = "Gets the list of positions based on survey uuid", response = Position.class, responseContainer = "List")
+	   @ApiResponses(value = {
+			     @ApiResponse(code = 200, message = "Positions found"),
+			     @ApiResponse(code = 404, message = "No such Account Survey found")
+		})
+	@Path("/{asUuid}/positions")
+	public Response getPositions(@ApiParam(value = "aas uuid") @PathParam("asUuid") @NotNull UUID asUuid) {
+		log.debug("Requested positions with AS uuid {}", asUuid);
+		AccountSurvey aSurvey = accountSurveyService.getAccountSurveyByUuid(asUuid);
+
+		if(null != aSurvey) {
+			Account account = aSurvey.getAccount();
+			log.debug("Returning positions for account id {}", account.getId());
+			return Response.status(Status.OK).entity(account.getPositions()).build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}		
 }

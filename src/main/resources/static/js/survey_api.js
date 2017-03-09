@@ -69,6 +69,55 @@ function getAccountSurveyUuid(asuuid, cb) {
     });
 }
 
+function getLocations(asuuid) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'survey/' + asuuid + '/locations',
+        success: function (data) {
+        	$.each(data, function (index, value) {
+        		$('#locationId').append($('<option/>', { 
+        			value: this.id,
+        			text : this.locationName 
+        		}));
+        	});
+        	$('#locationId').val(survey.account.defaultLocationId);
+        },
+        error: function(data) {
+        	console.log(data);
+        	$('#locationId').append($('<option/>', { 
+        		value: survey.account.defaultLocationId,
+        		text : 'Default Location'
+        	}));
+        }
+    });
+}
+
+function getPositions(asuuid) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'survey/' + asuuid + '/positions',
+        success: function (data) {
+        	$.each(data, function (index, value) {
+        		$('#positionId').append($('<option/>', { 
+        			value: this.id,
+        			text : this.positionName 
+        		}));
+        	});
+        	$('#positionId').val(survey.account.defaultPositionId);
+        },
+        error: function(data) {
+        	console.log(data);
+        	$('#positionId').append($('<option/>', { 
+        		value: survey.account.defaultPositionId,
+        		text : 'Default Position'
+        	}));
+        }
+    });
+}
+
+
 function getRespondantSurvey(uuId) {
     return $.ajax({
         type: "GET",
