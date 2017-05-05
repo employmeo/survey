@@ -1947,3 +1947,73 @@ OddManOut.prototype.isDone = function() {
 	return false;
 }
 
+/**
+ * 
+ * Video Recording - using MediaStreamRecorder JS
+ * 
+ */
+
+
+function captureUserMedia(mediaConstraints, successCallback, errorCallback) {
+    navigator.mediaDevices.getUserMedia(mediaConstraints).then(successCallback).catch(errorCallback);
+}
+
+function onMediaSuccess(stream) {
+    var video = document.createElement('video');
+    var videoWidth = 320;
+    var videoHeight = 240;
+    var timeInterval = 120000;
+    video = mergeProps(video, {
+        controls: true,
+        muted: true,
+        width: videoWidth,
+        height: videoHeight,
+        src: URL.createObjectURL(stream)
+    });
+    video.play();
+    $('#video-container').empty();
+    $('#video-container').append(video);
+    mediaRecorder = new MediaStreamRecorder(stream);
+    mediaRecorder.stream = stream;
+    var recorderType = document.getElementById('video-recorderType').value;
+    if (recorderType === 'MediaRecorder API') {
+        mediaRecorder.recorderType = MediaRecorderWrapper;
+    }
+    if (recorderType === 'WebP encoding into WebM') {
+        mediaRecorder.recorderType = WhammyRecorder;
+    }
+    // don't force any mimeType; use above "recorderType" instead.
+    // mediaRecorder.mimeType = 'video/webm'; // video/webm or video/mp4
+    mediaRecorder.videoWidth = videoWidth;
+    mediaRecorder.videoHeight = videoHeight;
+    mediaRecorder.ondataavailable = function(blob) {
+        var a = $('<a />', {
+        	'target' :'_blank',
+        	'text' : 'Open Recorded Video No. ' + (index++) + ' (Size: ' + bytesToSize(blob.size) + ') Time Length: ' + getTimeLength(timeInterval),
+        	'href' : URL.createObjectURL(blob)
+        });
+        $('#video-recordings').append(a);
+    };
+    // get blob after specific time interval
+    mediaRecorder.start(timeInterval);
+    $('#stop-recording').prop('disabled', false);
+    $('#pause-recording').prop('disabled', false);
+    $('#save-recording').prop('disabled', false);
+}
+
+function bytesToSize(bytes) {
+    var k = 1000;
+    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) return '0 Bytes';
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(k)), 10);
+    return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
+}
+
+function getTimeLength(milliseconds) {
+    var data = new Date(milliseconds);
+    return data.getUTCHours() + " hours, " + data.getUTCMinutes() + " minutes and " + data.getUTCSeconds() + " second(s)";
+}
+
+function onMediaError(e) {
+    console.error('media error', e);
+}
