@@ -39,10 +39,8 @@ public class SurveyConfiguration extends ResourceConfig {
     }	
 
 	private void registerEndpoints() {
-
 		//packages("com.talytica.survey.resources");
-		scan("com.talytica.survey.resources");
-		
+		scan("com.talytica.survey.resources");	
 		register(WadlResource.class);
 	}
 

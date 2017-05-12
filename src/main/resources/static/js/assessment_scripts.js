@@ -5,6 +5,8 @@ var urlParams;
 var respondant;
 var survey;
 var activeSection;
+var activeMediaQuestion;
+var mediaRecorder;
 var questions;
 var totalpages;
 var responses;
@@ -1255,6 +1257,76 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'onBlur' : 'submitPlainAnswer(this.form,'+pagecount+')'});
 		ansdiv.append(textarea);
 		form.append(ansdiv);
+		break;
+	case 28: // Video
+		var videoContainer = $('<div />',{
+			'class':'video-container text-center',
+			'style': 'width: 320px;height: 240px;border: 1px solid #cececc;box-sizing: border-box;margin: 0 auto;',
+			'id':'video-container-' + question.questionId});
+		var videoControls = $('<div />',{
+			'class':'video-controls text-center',
+			'id':'video-controls-' + question.questionId});
+		var btnStart = $('<button />',{
+			'class': 'btn btn-small',
+			'text' : 'start',
+			'id':'start-recording-' + question.questionId});
+		btnStart.attr('data-questionId',question.questionId);		
+	    btnStart.bind('click', function() {
+	    	this.disabled = true;
+	        startRecording($(this).attr('data-questionId'));	        
+	    });
+		var btnStop = $('<button />',{
+			'class':'btn btn-small',
+			'text' : 'stop',
+			'id':'stop-recording-' + question.questionId});
+		btnStop.attr('data-questionId',question.questionId);		
+	    btnStop.bind('click', function() {
+	    	this.disabled = true;
+            mediaRecorder.stop();
+            mediaRecorder.stream.stop();
+            var questionId = $(this).attr('data-questionId');
+            $('#pause-recording-'+questionId).prop('disabled', true);
+            $('#start-recording-'+questionId).prop('disabled', false);  
+	    });
+		var btnPause = $('<button />',{
+			'class':'btn btn-small',
+			'text' : 'pause',
+			'id':'pause-recording-' + question.questionId});
+		btnPause.attr('data-questionId',question.questionId);		
+	    btnPause.bind('click', function() {
+	    	this.disabled = true;
+            mediaRecorder.pause();
+            var questionId = $(this).attr('data-questionId');
+            $('#resume-recording-'+questionId).prop('disabled', false);  
+	    });
+		var btnResume = $('<button />',{
+			'class':'btn btn-small',
+			'text' : 'resume',
+			'id':'resume-recording-' + question.questionId});
+		btnResume.attr('data-questionId',question.questionId);		
+	    btnResume.bind('click', function() {
+	    	this.disabled = true;
+            mediaRecorder.resume();
+            var questionId = $(this).attr('data-questionId');
+            $('#pause-recording-'+questionId).prop('disabled', false);  
+	    });
+		var btnSave = $('<button />',{
+			'class':'btn btn-small',
+			'text' : 'save',
+			'id':'save-recording-' + question.questionId});
+		btnSave.attr('data-questionId',question.questionId);		
+	    btnSave.bind('click', function() {
+	    	this.disabled = true;
+            mediaRecorder.save();  
+	    });
+	    form.append(videoContainer);
+	    videoControls.append(btnStart);
+	    videoControls.append(btnStop);
+	    videoControls.append(btnPause);
+	    videoControls.append(btnResume);
+	    videoControls.append(btnSave);
+	    form.append(videoControls);
+		break;
 	case 6: // Multiple Choice (radio)
 	default:
 		// basic multichoice
@@ -1947,58 +2019,63 @@ OddManOut.prototype.isDone = function() {
 	return false;
 }
 
+
+
 /**
  * 
  * Video Recording - using MediaStreamRecorder JS
  * 
  */
 
-
-function captureUserMedia(mediaConstraints, successCallback, errorCallback) {
-    navigator.mediaDevices.getUserMedia(mediaConstraints).then(successCallback).catch(errorCallback);
+function startRecording(questionId) {
+	activeMediaQuestion = questionId;
+    navigator.mediaDevices.getUserMedia({audio: !IsOpera && !IsEdge, video: true }).then(onMediaSuccess).catch(onMediaError);
 }
 
 function onMediaSuccess(stream) {
-    var video = document.createElement('video');
-    var videoWidth = 320;
-    var videoHeight = 240;
-    var timeInterval = 120000;
-    video = mergeProps(video, {
+    var video = $('<video />', {
         controls: true,
         muted: true,
-        width: videoWidth,
-        height: videoHeight,
-        src: URL.createObjectURL(stream)
+        width: 320,
+        height: 240,
+        id : 'video-' + activeMediaQuestion,
+        src: URL.createObjectURL(stream)	
     });
-    video.play();
-    $('#video-container').empty();
-    $('#video-container').append(video);
+    var timeInterval = 120000;
+    $('#video-container-'+activeMediaQuestion).empty();
+    $('#video-container-'+activeMediaQuestion).append(video);
+    video.get(0).play();
+    console.log(video);
     mediaRecorder = new MediaStreamRecorder(stream);
     mediaRecorder.stream = stream;
-    var recorderType = document.getElementById('video-recorderType').value;
-    if (recorderType === 'MediaRecorder API') {
-        mediaRecorder.recorderType = MediaRecorderWrapper;
-    }
-    if (recorderType === 'WebP encoding into WebM') {
-        mediaRecorder.recorderType = WhammyRecorder;
-    }
-    // don't force any mimeType; use above "recorderType" instead.
-    // mediaRecorder.mimeType = 'video/webm'; // video/webm or video/mp4
-    mediaRecorder.videoWidth = videoWidth;
-    mediaRecorder.videoHeight = videoHeight;
+    mediaRecorder.videoWidth = 320;
+    mediaRecorder.videoHeight = 240;
     mediaRecorder.ondataavailable = function(blob) {
-        var a = $('<a />', {
-        	'target' :'_blank',
-        	'text' : 'Open Recorded Video No. ' + (index++) + ' (Size: ' + bytesToSize(blob.size) + ') Time Length: ' + getTimeLength(timeInterval),
-        	'href' : URL.createObjectURL(blob)
-        });
-        $('#video-recordings').append(a);
+    	console.log('stop clicked');
+    	$('#video-'+ activeMediaQuestion).attr('src', URL.createObjectURL(blob));
+    	$('#video-'+ activeMediaQuestion).attr('data-blob', blob);
+        console.log('attached media to video-object');
     };
     // get blob after specific time interval
     mediaRecorder.start(timeInterval);
-    $('#stop-recording').prop('disabled', false);
-    $('#pause-recording').prop('disabled', false);
-    $('#save-recording').prop('disabled', false);
+    $('#stop-recording-'+activeMediaQuestion).prop('disabled', false);
+    $('#pause-recording-'+activeMediaQuestion).prop('disabled', false);
+    $('#save-recording-'+activeMediaQuestion).prop('disabled', false);
+}
+
+function uploadResponseMediaToServer(questionId) {
+    var formData = new FormData();
+	var blob = $('#video-'+ questionId).attr('data-blob');
+    var file = new File([blob], 'msr-' + (new Date).toISOString().replace(/:|\./g, '-') + '.webm', {
+        type: 'video/webm'
+    }); 
+    
+	var fields = $('#question_'+ questionId).serializeArray();
+	for (var i=0;i<fields.length;i++) {
+		formData.append(fields[i].name, fields[i].value);
+	}
+    formData.append('media', file, file.name);
+    sendMediaResponse(formData);
 }
 
 function bytesToSize(bytes) {

@@ -4,7 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.MultipartAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;;
 
 @SpringBootApplication(
 		exclude={MultipartAutoConfiguration.class},
@@ -23,4 +26,5 @@ public class SurveyApplication {
 	    return resolver;
 	}
 	
+
 }
