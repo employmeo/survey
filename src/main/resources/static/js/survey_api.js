@@ -166,6 +166,24 @@ function checkResponses(uuId, cb) {
     });
 }
 
+function sendMediaResponse(formdata) {
+	$.ajax({
+        type: 'POST',
+        async: true,
+        url: '/upload/media',
+        processData: false,  // Important!
+        contentType: false,
+        cache: false,
+        data: formdata,
+        headers : {
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
+        success: function(data) { console.log(data); },
+        error: function(data) { console.log(data); } // what to do here?
+  });
+}
+
 function sendResponse(response, cb) {
     var method = "POST";
     if (response.id != null) method="PUT";
@@ -184,6 +202,7 @@ function sendResponse(response, cb) {
         error: function(data) { console.log(data); } // what to do here?
   });
 }
+
 
 function submitSurvey() {
 	var redirect = respondant.redirectUrl;

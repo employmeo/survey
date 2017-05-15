@@ -18,7 +18,6 @@ import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 
-
 @Component
 @ApplicationPath("${spring.jersey.application-path:/survey}")
 public class SurveyConfiguration extends ResourceConfig {
@@ -28,8 +27,7 @@ public class SurveyConfiguration extends ResourceConfig {
 	 private String apiPath;
 	 
 	public SurveyConfiguration() {
-        registerEndpoints();
-		//register(IntegrationAuthProvider.class);     
+        registerEndpoints();   
         register(RolesAllowedDynamicFeature.class);
 	}
 	
@@ -41,10 +39,8 @@ public class SurveyConfiguration extends ResourceConfig {
     }	
 
 	private void registerEndpoints() {
-
 		//packages("com.talytica.survey.resources");
-		scan("com.talytica.survey.resources");
-		
+		scan("com.talytica.survey.resources");	
 		register(WadlResource.class);
 	}
 
@@ -90,4 +86,5 @@ public class SurveyConfiguration extends ResourceConfig {
 	     config.setPrettyPrint(true);
 	     config.setScan(true);
 	   }
+
 }
