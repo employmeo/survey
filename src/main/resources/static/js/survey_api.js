@@ -166,7 +166,7 @@ function checkResponses(uuId, cb) {
     });
 }
 
-function sendMediaResponse(formdata) {
+function sendMediaResponse(formdata, cb) {
 	$.ajax({
         type: 'POST',
         async: true,
@@ -179,7 +179,7 @@ function sendMediaResponse(formdata) {
         	'charset':'UTF-8',
         	'Accept': 'application/json'
         },
-        success: function(data) { console.log(data); },
+        success: cb,
         error: function(data) { console.log(data); } // what to do here?
   });
 }

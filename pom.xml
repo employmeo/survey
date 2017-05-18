@@ -12,7 +12,7 @@
 	<artifactId>survey</artifactId>
 	<name>Talytica Survey</name>
 	<description>Talytica Survey API Components</description>
-	<version>0.0.20</version>
+	<version>0.0.21-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -20,7 +20,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<persistence-unit.version>0.0.33</persistence-unit.version>
+		<persistence-unit.version>0.0.34-SNAPSHOT</persistence-unit.version>
 		<spring-cloud-version>1.2.0.RELEASE</spring-cloud-version>
 		<guava.version>21.0</guava.version>
 		<swagger.version>1.5.12</swagger.version>
