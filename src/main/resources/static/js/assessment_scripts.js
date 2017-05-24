@@ -827,7 +827,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'type' : 'radio', 'class' : 'thumbs-up',
 			'name': "responseValue",
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '11'});
+			'value' :  '10'});
 		like.append(radioLike);
 		like.append($('<label />', {
 			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'thumbs-up' }));
@@ -837,7 +837,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'type' : 'radio', 'class' : 'thumbs-down', 
 			'name': "responseValue",
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '1'});
+			'value' :  '0'});
 		dislike.append(radioDislike);
 		dislike.append($('<label />', {
 			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'thumbs-down' }));
