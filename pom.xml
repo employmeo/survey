@@ -16,11 +16,11 @@
 	<packaging>jar</packaging>
 
 	<properties>
+		<persistence-unit.version>0.0.34</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<persistence-unit.version>0.0.34-SNAPSHOT</persistence-unit.version>
 		<spring-cloud-version>1.2.0.RELEASE</spring-cloud-version>
 		<guava.version>21.0</guava.version>
 		<swagger.version>1.5.12</swagger.version>
