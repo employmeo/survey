@@ -827,7 +827,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'type' : 'radio', 'class' : 'thumbs-up',
 			'name': "responseValue",
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '11'});
+			'value' :  '10'});
 		like.append(radioLike);
 		like.append($('<label />', {
 			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'thumbs-up' }));
@@ -837,7 +837,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'type' : 'radio', 'class' : 'thumbs-down', 
 			'name': "responseValue",
 			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '1'});
+			'value' :  '0'});
 		dislike.append(radioDislike);
 		dislike.append($('<label />', {
 			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'thumbs-down' }));
@@ -1312,13 +1312,22 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	    });
 		var btnSave = $('<button />',{
 			'class':'btn btn-small',
-			'text' : 'save',
+			'text' : 'submit',
+			'disabled' : 'true',
 			'id':'save-recording-' + question.questionId});
 		btnSave.attr('data-questionId',question.questionId);		
 	    btnSave.bind('click', function() {
 	    	this.disabled = true;
-            mediaRecorder.save();  
+	    	mediaRecorder.stop();
+	        mediaRecorder.stream.stop();
+            uploadResponseMediaToServer($(this).attr('data-questionId'));
+            var questionId = $(this).attr('data-questionId');
+            $('#resume-recording-'+questionId).prop('disabled', true);
+            $('#stop-recording-'+questionId).prop('disabled', true);
+            $('#pause-recording-'+questionId).prop('disabled', true);
+            $('#start-recording-'+questionId).prop('disabled', true); 
 	    });
+
 	    form.append(videoContainer);
 	    videoControls.append(btnStart);
 	    videoControls.append(btnStop);
@@ -2053,7 +2062,7 @@ function onMediaSuccess(stream) {
     mediaRecorder.ondataavailable = function(blob) {
     	console.log('stop clicked');
     	$('#video-'+ activeMediaQuestion).attr('src', URL.createObjectURL(blob));
-    	$('#video-'+ activeMediaQuestion).attr('data-blob', blob);
+    	$('#video-'+ activeMediaQuestion).data('recording', blob);
         console.log('attached media to video-object');
     };
     // get blob after specific time interval
@@ -2065,17 +2074,21 @@ function onMediaSuccess(stream) {
 
 function uploadResponseMediaToServer(questionId) {
     var formData = new FormData();
-	var blob = $('#video-'+ questionId).attr('data-blob');
+	var blob = $('#video-'+ questionId).data('recording');
     var file = new File([blob], 'msr-' + (new Date).toISOString().replace(/:|\./g, '-') + '.webm', {
         type: 'video/webm'
     }); 
-    
 	var fields = $('#question_'+ questionId).serializeArray();
 	for (var i=0;i<fields.length;i++) {
 		formData.append(fields[i].name, fields[i].value);
 	}
     formData.append('media', file, file.name);
-    sendMediaResponse(formData);
+     
+    var pagenum =  $('#question_'+ questionId).data('pagecount');
+    sendMediaResponse(formData, function(data) {
+    	saveResponse(data.entity);
+		isPageComplete(pagenum);
+	});
 }
 
 function bytesToSize(bytes) {

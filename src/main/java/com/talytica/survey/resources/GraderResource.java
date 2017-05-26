@@ -69,11 +69,13 @@ public class GraderResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Gets list of the grades for grader", response = Grade.class, responseContainer="List")
 	   @ApiResponses(value = {
-	     @ApiResponse(code = 200, message = "Grades found")
+	     @ApiResponse(code = 200, message = "Grades found"),
+	     @ApiResponse(code = 404, message = "Grader not found")
 	   })
 	public Response getGradesByGraderId(@ApiParam(value = "user id") @PathParam("uuid") @NotNull UUID uuId) {
 		log.debug("Requested grades by grader uuid {}", uuId);
 		Grader grader = graderService.getGraderByUuid(uuId);
+		if (null == grader) Response.status(Status.GONE).entity("Reference Request not found for this ID.").build();
 		List<Grade> grades = graderService.getGradesByGraderId(grader.getId());
 		return Response.status(Status.OK).entity(grades).build();
 

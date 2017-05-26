@@ -63,7 +63,7 @@ public class MediaUploadController {
         String key = "clientmedia/" + Instant.now().getEpochSecond() + "_" + media.getOriginalFilename();
         String url = "https://s3.amazonaws.com/" + s3BucketName + "/" + key;
         answer.setResponseMedia(url);
-        
+
 		try {	
             s3Client.putObject(new PutObjectRequest(s3BucketName, key, convertMultipart(media))
             			.withCannedAcl(CannedAccessControlList.PublicRead));
