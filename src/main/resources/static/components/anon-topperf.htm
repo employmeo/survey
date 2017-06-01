@@ -1,0 +1,49 @@
+<div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<h3>Optional Identification Information</h3>
+		<p>Thank you for participating. None of the fields below are required. We do not intend to use any of the below information, except to confirm your results if requested.</p>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<form class="form" id='newrespform' onsubmit="submitNewRespondant();return false;">
+			<input type="hidden" id="asid" name="asid">
+			<!-- Signifies Benchmark -->
+			<input type="hidden" name="type" id="type" value="100">
+			<input type="hidden" name="topPerformer" id="topPerformer" value="true">
+			<label for="fname">First Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+				<input class="form-control" type="text" name="fname" placeholder="Anonymous" value='Anonymous'>
+			</div>
+			<label for="lname">Last Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+				<input class="form-control" type="text" name="lname" placeholder="User" value='User'>
+			</div>
+			<label for="email">E-mail Address:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-envelope fa-fw"></i></span>
+				<input class="form-control"
+					type="email" name="email" placeholder="email">
+			</div>
+			<label for="address">Address (or nearby location):</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-home fa-fw"></i></span>
+				<input class="form-control" type="text" name="address" id="address" placeholder="Enter a location">
+			</div>
+			<div class="col-xs-12 col-sm-12 col-md-12">
+				<hr>
+			</div>
+			<input type="hidden" name="lat" id="lat">
+			<input type="hidden" name="lng" id="lng">
+				<input type="hidden" name="formatted_address" id="formatted_address">
+				<input type="hidden" name="country_short" id="country_short">
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+	</div>
+</div>
