@@ -62,6 +62,9 @@ public class SubmitSurveyResource {
 				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
 				respondant.setFinishTime(new Timestamp(new Date().getTime()));
 				respondantService.save(respondant);
+				log.info("Account: {} SURVEY COMPLETE for respondant id: {}",
+						respondant.getAccount().getAccountName(),
+						respondant.getId());
 				return Response.status(Status.ACCEPTED).build();
 			} else {
 				return Response.status(Status.NOT_MODIFIED).build();	
