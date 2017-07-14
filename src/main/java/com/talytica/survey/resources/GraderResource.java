@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.security.PermitAll;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -12,6 +13,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -120,10 +122,14 @@ public class GraderResource {
 	   @ApiResponses(value = {
 	     @ApiResponse(code = 202, message = "Status update accepted"),
 	   })
-	public Response submitGrader(@ApiParam(value = "grader id") @PathParam("uuid") UUID uuId) {
+	public Response submitGrader(
+			@Context final HttpServletRequest reqt,
+			@ApiParam(value = "grader id") @PathParam("uuid") UUID uuId) {
 		log.debug("Requested grader id: {} status update to {}", uuId, Grader.STATUS_COMPLETED);
 		Grader grader = graderService.getGraderByUuid(uuId);
 		if (grader != null) {
+			log.debug((reqt.getHeader("User-Agent")));
+			log.debug(reqt.getRemoteAddr());
 			grader.setStatus(Grader.STATUS_COMPLETED);
 			Grader savedGrader = graderService.save(grader);
 			log.debug("Saved grader {}", savedGrader);

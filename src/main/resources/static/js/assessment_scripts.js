@@ -1437,7 +1437,7 @@ function getSurveyNav(pagecount, totalpages, pageType) {
 function submitSection() {
 	var deck = document.getElementById('wrapper');
 	if (grader) {
-		submitGrader();		
+		submitGrader(grader);		
 	} else {
 		activeSection.complete=true;
 		if (endAt != null) {

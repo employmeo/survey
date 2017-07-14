@@ -317,7 +317,8 @@ function sendCallMeRequest(request, cb) {
   });
 }
 
-function submitGrader() {
+function submitGrader(grader) {
+	console.log(grader);
 	var redirect = 'http://www.talytica.com/';
 	var submission = {};
     return $.ajax({
