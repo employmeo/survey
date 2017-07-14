@@ -2,6 +2,7 @@ package com.talytica.survey.resources;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.security.PermitAll;
@@ -21,10 +22,13 @@ import javax.ws.rs.core.Response.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.employmeo.data.model.Answer;
 import com.employmeo.data.model.Criterion;
 import com.employmeo.data.model.Grade;
 import com.employmeo.data.model.Grader;
+import com.employmeo.data.model.Question;
 import com.employmeo.data.service.GraderService;
+import com.employmeo.data.service.QuestionService;
 import com.employmeo.data.service.RespondantService;
 
 import io.swagger.annotations.Api;
@@ -47,6 +51,9 @@ public class GraderResource {
 	
 	@Autowired
 	RespondantService respondantService;
+	
+	@Autowired
+	QuestionService questionService;
 
 	@GET
 	@Path("/{uuid}")
@@ -106,9 +113,18 @@ public class GraderResource {
 	   @ApiResponses(value = {
 	     @ApiResponse(code = 201, message = "Grade Saved"),
 	   })
-	public Response saveQuestion(@ApiParam(value = "grade") Grade grade) {
+	public Response saveGrade(@ApiParam(value = "grade") Grade grade) {
 		log.debug("Requested grade save: {}", grade);
-
+		if (grade.getIsSummary()) {
+			Grader grader = graderService.getGraderById(grade.getGraderId());
+			grader.setSummaryScore(textByAnswer(grade));
+			graderService.save(grader);
+		}
+		if (grade.getIsRelationship()) {
+			Grader grader = graderService.getGraderById(grade.getGraderId());
+			grader.setRelationship(textByAnswer(grade));			
+			graderService.save(grader);
+		}
 		Grade savedGrade = graderService.saveGrade(grade);
 		log.debug("Saved grade {}", savedGrade);
 
@@ -128,8 +144,8 @@ public class GraderResource {
 		log.debug("Requested grader id: {} status update to {}", uuId, Grader.STATUS_COMPLETED);
 		Grader grader = graderService.getGraderByUuid(uuId);
 		if (grader != null) {
-			log.debug((reqt.getHeader("User-Agent")));
-			log.debug(reqt.getRemoteAddr());
+			grader.setUserAgent(reqt.getHeader("User-Agent"));
+			grader.setIpAddress(reqt.getRemoteAddr());
 			grader.setStatus(Grader.STATUS_COMPLETED);
 			Grader savedGrader = graderService.save(grader);
 			log.debug("Saved grader {}", savedGrader);
@@ -155,5 +171,15 @@ public class GraderResource {
 			log.debug("Declined grader {}", savedGrader);
 		} 
 		return Response.seeOther(new URI("/thankyou.htm")).build();
+	}
+
+	
+	private String textByAnswer(Grade grade) {
+		Question question = questionService.getQuestionById(grade.getQuestionId());
+		Set<Answer> answers = question.getAnswers();
+		for (Answer answer : answers) {
+			if (answer.getAnswerValue() == grade.getGradeValue()) return answer.getAnswerText();
+		}
+		return grade.getGradeValue().toString();
 	}
 }
