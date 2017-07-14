@@ -117,14 +117,15 @@ public class GraderResource {
 		log.debug("Requested grade save: {}", grade);
 		if (grade.getIsSummary()) {
 			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setSummaryScore(textByAnswer(grade));
+			grader.setSummaryScore(textByAnswer(grade, true));
 			graderService.save(grader);
 		}
 		if (grade.getIsRelationship()) {
 			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setRelationship(textByAnswer(grade));			
+			grader.setRelationship(textByAnswer(grade, true));			
 			graderService.save(grader);
 		}
+		if ((null == grade.getGradeText()) || (grade.getGradeText().isEmpty())) grade.setGradeText(textByAnswer(grade, false));
 		Grade savedGrade = graderService.saveGrade(grade);
 		log.debug("Saved grade {}", savedGrade);
 
@@ -174,12 +175,14 @@ public class GraderResource {
 	}
 
 	
-	private String textByAnswer(Grade grade) {
+	private String textByAnswer(Grade grade, Boolean forceResponse) {
 		Question question = questionService.getQuestionById(grade.getQuestionId());
 		Set<Answer> answers = question.getAnswers();
 		for (Answer answer : answers) {
 			if (answer.getAnswerValue() == grade.getGradeValue()) return answer.getAnswerText();
 		}
-		return grade.getGradeValue().toString();
+
+		if (forceResponse) return grade.getGradeValue().toString();
+		return null;
 	}
 }
