@@ -268,15 +268,17 @@ function getGrades(uuId) {
     });
 }
 
-function sendGrade(response, cb) {
+function sendGrade(criterion, response, cb) {
     var method = "POST";
     var grade = {};
     if (response.id) grade.id = response.id;
     if (response.questionId) grade.questionId = response.questionId;
     if (response.respondantId) grade.graderId = response.respondantId;
     if (response.responseValue) grade.gradeValue = response.responseValue;
-    if (response.responseText) grade.gradeText = response.responseText;   
-    console.log(grade);
+    if (response.responseText) grade.gradeText = response.responseText;
+    if (criterion) grade.isRelationship = criterion.isRelationship;
+    if (criterion) grade.isSummary = criterion.isSummary;
+    console.log(grade, criterion);
     $.ajax({
         type: method,
         async: true,
@@ -317,8 +319,9 @@ function sendCallMeRequest(request, cb) {
   });
 }
 
-function submitGrader() {
+function submitGrader(grader) {
 	var redirect = 'http://www.talytica.com/';
+	if (grader.account && grader.account.defaultRedirect) redirect = grader.account.defaultRedirect;
 	var submission = {};
     return $.ajax({
         type: "POST",

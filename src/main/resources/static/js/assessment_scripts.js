@@ -131,7 +131,8 @@ function submitPlainAnswer(form, pagenum) {
 			isPageComplete(pagenum);
 		});
 	} else if(grader) {
-		sendGrade(response, function(data) {
+		var criterion = getCriteriaForQid(response.questionId);
+		sendGrade(criterion, response, function(data) {
 			saveGrade(data);
 			isPageComplete(1);
 		});
@@ -156,6 +157,13 @@ function saveGrade(grade) {
 function getGradeForCriteria(qid) {
 	for (var i = 0; i<grades.length; i++) {
 		if (qid == grades[i].questionId) return grades[i];
+	}
+	return null;
+}
+
+function getCriteriaForQid(qid) {
+	for (var i = 0; i<criteria.length; i++) {
+		if (qid ==  criteria[i].questionId) return  criteria[i];
 	}
 	return null;
 }
@@ -1437,7 +1445,7 @@ function getSurveyNav(pagecount, totalpages, pageType) {
 function submitSection() {
 	var deck = document.getElementById('wrapper');
 	if (grader) {
-		submitGrader();		
+		submitGrader(grader);		
 	} else {
 		activeSection.complete=true;
 		if (endAt != null) {
