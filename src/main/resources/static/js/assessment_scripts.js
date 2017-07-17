@@ -2,7 +2,7 @@
 // Global Variables and actions for the survey page(s)
 //
 var urlParams;
-var respondant;
+var respondant = null;
 var survey;
 var activeSection;
 var activeMediaQuestion;
@@ -15,7 +15,7 @@ var progress;
 var sections;
 var endAt;
 var timeinterval;
-var grader;
+var grader = null;
 var grades;
 var criteria;
 var servicePath = '/survey/1/';
