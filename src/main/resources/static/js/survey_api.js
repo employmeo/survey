@@ -235,10 +235,11 @@ function getGrader(uuId) {
         type: "GET",
         async: true,
         url: servicePath + 'grader/'+uuId,
+        cache: false,
         success: function(data) { 
         	grader = data;
         },
-        error: function(data) { showError(data); }
+        error: function(data) { grader = null; showError(data); }
     });
     
 
@@ -261,6 +262,7 @@ function getGrades(uuId) {
         type: "GET",
         async: true,
         url: servicePath + 'grader/'+uuId+'/grades',
+        cache: false,
         success: function(data) { 
         	grades = data;
         },
