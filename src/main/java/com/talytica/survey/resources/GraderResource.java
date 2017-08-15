@@ -182,7 +182,7 @@ public class GraderResource {
 			if (answer.getAnswerValue() == grade.getGradeValue()) return answer.getAnswerText();
 		}
 
-		if (forceResponse) return String.format("0", grade.getGradeValue());
+		if (forceResponse) return String.format("%d", grade.getGradeValue());
 
 		return null;
 	}
