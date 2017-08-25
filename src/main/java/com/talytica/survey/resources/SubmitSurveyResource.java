@@ -66,6 +66,11 @@ public class SubmitSurveyResource {
 						respondant.getAccount().getAccountName(),
 						respondant.getId());
 				return Response.status(Status.ACCEPTED).build();
+			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
+					(respondant.getRespondantStatus() < Respondant.STATUS_ADVCOMPLETED)) {
+				respondant.setRespondantStatus(Respondant.STATUS_ADVCOMPLETED);
+				respondantService.save(respondant);
+				return Response.status(Status.ACCEPTED).build();
 			} else {
 				return Response.status(Status.NOT_MODIFIED).build();	
 			}
