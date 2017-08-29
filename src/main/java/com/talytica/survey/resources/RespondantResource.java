@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 
 import com.employmeo.data.model.AccountSurvey;
 import com.employmeo.data.model.Respondant;
-
+import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
 
 import io.swagger.annotations.Api;
@@ -44,6 +44,8 @@ public class RespondantResource {
 
 	@Autowired
 	private RespondantService respondantService;
+	@Autowired
+	private AccountSurveyService accountSurveyService;
 	
 	@GET
 	@Path("/{uuid}")
@@ -67,7 +69,14 @@ public class RespondantResource {
 				respondant.setRespondantUserAgent(reqt.getHeader("User-Agent"));
 				log.debug("Updating respondant {} status to STARTED", respondant);
 				respondantService.save(respondant);
-			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
+			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
+					(respondant.getRespondantStatus() < Respondant.STATUS_ADVCOMPLETED)) {
+				respondant.setRespondantStatus(Respondant.STATUS_ADVSTARTED);
+				log.debug("Respondant {} started 2nd stage assessment", respondant.getId());
+				respondantService.save(respondant);
+				
+			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) ||
+					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVCOMPLETED))) {
 				// TODO put in better error handling here.
 				log.debug("Survey already completed for respondant {}", respondant);
 				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
@@ -90,24 +99,28 @@ public class RespondantResource {
 	     @ApiResponse(code = 410, message = "This assessment has already been completed and submitted.")
 	   })	
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getSurvey(@Context final HttpServletRequest reqt,
-			@ApiParam(value = "respondant uuid") @PathParam("uuid") @NotNull UUID uuid) {
+	public Response getSurvey(@ApiParam(value = "respondant uuid") @PathParam("uuid") @NotNull UUID uuid) {
 
 		log.debug("Requested survey by respondant uuid {}", uuid);
-		
+		AccountSurvey as = null;
 		Respondant respondant = respondantService.getRespondant(uuid);
 		if (respondant != null) {
-			if (respondant.getRespondantStatus() < Respondant.STATUS_STARTED) {
-				respondant.setRespondantStatus(Respondant.STATUS_STARTED);
-				respondant.setStartTime(new Timestamp(new Date().getTime()));
-				respondant.setRespondantUserAgent(reqt.getHeader("User-Agent"));
-			} else if (respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
+			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
+				as = respondant.getAccountSurvey();
+			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
+				(respondant.getRespondantStatus() < Respondant.STATUS_ADVCOMPLETED)) {
+				log.debug("Respondant {} started 2nd stage assessment", respondant.getId());
+				as = accountSurveyService.getAccountSurveyById(respondant.getSecondStageSurveyId());
+			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) ||
+					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVCOMPLETED))) {
 				// TODO put in better error handling here.
 				log.debug("Survey already completed for respondant {}", respondant);
 				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
 			}
+		}
+		if (null != as) {
 			log.debug("Returning survey by respondant {}", respondant);
-			return Response.status(Status.OK).entity(respondant.getAccountSurvey()).build();
+			return Response.status(Status.OK).entity(as).build();
 		} else {
 			// TODO put in better error handling here.
 			log.debug("Respondant not found for uuid {}", uuid);
