@@ -301,7 +301,7 @@ function buildGraderPreamble() {
 	var body = $('<div />', { 'class' : 'col-xs-12' });
 	body.append($('<h3 />',{'text':'Reference for ' + grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName }));
 	body.append($('<p />',{'text': grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName + 
-		' has requested your input on his job application. This short questionnaire should take less than 2 ' +
+		' has requested your input on their job application. This short questionnaire should take less than 2 ' +
 		'minutes to complete. To proceed, please click the "continue" button below. If you do not wish to ' +
 		'provide input, please click the "decline" button.'
 		}));
