@@ -12,11 +12,11 @@
 	<artifactId>survey</artifactId>
 	<name>Talytica Survey</name>
 	<description>Talytica Survey API Components</description>
-	<version>0.0.28</version>
+	<version>0.0.29-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
-		<persistence-unit.version>0.1.3</persistence-unit.version>
+		<persistence-unit.version>0.1.4-SNAPSHOT</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -27,6 +27,7 @@
 		<metrics.version>3.1.3</metrics.version>
 		<commons-math-version>3.6.1</commons-math-version>
 		<sendgrid.version>3.1.0</sendgrid.version>
+		<stripe.version>5.8.0</stripe.version>
 		<twillio.version>(6.0,6.9)</twillio.version>
 		<spring-cloud-version>1.2.0.RELEASE</spring-cloud-version>
 		<fileupload-version>1.3.1</fileupload-version>
@@ -108,6 +109,11 @@
 			<artifactId>twilio-java-sdk</artifactId>
 			<version>${twillio.version}</version>
 		</dependency>
+		<dependency>
+		    <groupId>com.stripe</groupId>
+		    <artifactId>stripe-java</artifactId>
+		    <version>${stripe.version}</version>
+		</dependency>	
 		<!-- sendgrid email service -->
 		<dependency>
 		    <groupId>com.sendgrid</groupId>
