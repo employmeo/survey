@@ -1438,7 +1438,7 @@ function getSurveyNav(pagecount, totalpages, pageType) {
 	navigation.append(leftnav);
 	navigation.append(centernav);
 	navigation.append(rightnav);
-	
+	navigation.hover(function() {document.activeElement.blur();});
 	return navigation;
 }
 
