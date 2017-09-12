@@ -25,6 +25,7 @@ import com.employmeo.data.model.AccountSurvey;
 import com.employmeo.data.model.Location;
 import com.employmeo.data.model.Position;
 import com.employmeo.data.model.Respondant;
+import com.employmeo.data.service.AccountService;
 import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
 
@@ -45,6 +46,8 @@ public class AccountSurveyResource {
 	
 	@Autowired
 	private AccountSurveyService accountSurveyService;
+	@Autowired
+	private AccountService accountService;
 
 	@Autowired
 	private RespondantService respondantService;
@@ -146,9 +149,8 @@ public class AccountSurveyResource {
 		AccountSurvey aSurvey = accountSurveyService.getAccountSurveyByUuid(asUuid);
 
 		if(null != aSurvey) {
-			Account account = aSurvey.getAccount();
-			log.debug("Returning locations for account id {}", account.getId());
-			return Response.status(Status.OK).entity(account.getLocations()).build();
+			log.debug("Returning locations for account id {}", aSurvey.getAccountId());
+			return Response.status(Status.OK).entity(accountService.getVisibleLocations(aSurvey.getAccountId())).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
 		}
@@ -166,9 +168,8 @@ public class AccountSurveyResource {
 		AccountSurvey aSurvey = accountSurveyService.getAccountSurveyByUuid(asUuid);
 
 		if(null != aSurvey) {
-			Account account = aSurvey.getAccount();
-			log.debug("Returning positions for account id {}", account.getId());
-			return Response.status(Status.OK).entity(account.getPositions()).build();
+			log.debug("Returning positions for account id {}", aSurvey.getAccountId());
+			return Response.status(Status.OK).entity(accountService.getActivePositions(aSurvey.getAccountId())).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
 		}
