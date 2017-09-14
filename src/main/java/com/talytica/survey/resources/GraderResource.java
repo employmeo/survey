@@ -176,6 +176,7 @@ public class GraderResource {
 
 	
 	private String textByAnswer(Grade grade, Boolean forceResponse) {
+		if ((grade.getGradeText() != null) && (!grade.getGradeText().isEmpty())) return grade.getGradeText();
 		Question question = questionService.getQuestionById(grade.getQuestionId());
 		Set<Answer> answers = question.getAnswers();
 		for (Answer answer : answers) {
@@ -184,6 +185,6 @@ public class GraderResource {
 
 		if (forceResponse) return String.format("%d", grade.getGradeValue());
 
-		return null;
+		return grade.getGradeText();
 	}
 }
