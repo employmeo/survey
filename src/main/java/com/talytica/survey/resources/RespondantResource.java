@@ -32,15 +32,16 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @PermitAll
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Slf4j
 @Path("/1/respondant")
 @Api( value="/1/respondant", produces=MediaType.APPLICATION_JSON, consumes=MediaType.APPLICATION_JSON)
 public class RespondantResource {
-	private static final Logger log = LoggerFactory.getLogger(RespondantResource.class);
 
 	@Autowired
 	private RespondantService respondantService;
@@ -67,6 +68,7 @@ public class RespondantResource {
 				respondant.setRespondantStatus(Respondant.STATUS_STARTED);
 				respondant.setStartTime(new Timestamp(new Date().getTime()));
 				respondant.setRespondantUserAgent(reqt.getHeader("User-Agent"));
+				respondant.setIpAddress(reqt.getRemoteAddr());
 				log.debug("Updating respondant {} status to STARTED", respondant);
 				respondantService.save(respondant);
 			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 

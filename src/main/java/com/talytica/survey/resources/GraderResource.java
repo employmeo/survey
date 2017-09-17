@@ -116,8 +116,11 @@ public class GraderResource {
 	public Response saveGrade(@ApiParam(value = "grade") Grade grade) {
 		log.debug("Requested grade save: {}", grade);
 		if (grade.getIsSummary()) {
+			log.debug("Grader {} submitted summary with value {} and text{}", grade.getGraderId(), grade.getGradeValue(), grade.getGradeText());
 			Grader grader = graderService.getGraderById(grade.getGraderId());
 			grader.setSummaryScore(textByAnswer(grade, true));
+			if ((null == grader.getSummaryScore()) || (grader.getSummaryScore().isEmpty()))
+				log.warn("Grader {} summary score saved as {}", grade.getGraderId(), grader.getSummaryScore());
 			graderService.save(grader);
 		}
 		if (grade.getIsRelationship()) {
@@ -173,18 +176,18 @@ public class GraderResource {
 		} 
 		return Response.seeOther(new URI("/thankyou.htm")).build();
 	}
-
 	
 	private String textByAnswer(Grade grade, Boolean forceResponse) {
 		if ((grade.getGradeText() != null) && (!grade.getGradeText().isEmpty())) return grade.getGradeText();
 		Question question = questionService.getQuestionById(grade.getQuestionId());
 		Set<Answer> answers = question.getAnswers();
+		if (answers.size() > 0) log.debug("Grade {} consulting {} answers for text", grade.getGraderId(),answers.size());
 		for (Answer answer : answers) {
 			if (answer.getAnswerValue() == grade.getGradeValue()) return answer.getAnswerText();
 		}
 
 		if (forceResponse) return String.format("%d", grade.getGradeValue());
-
+		log.debug("No answer forced, returning empty grade");
 		return grade.getGradeText();
 	}
 }
