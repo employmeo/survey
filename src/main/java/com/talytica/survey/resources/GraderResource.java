@@ -104,7 +104,6 @@ public class GraderResource {
 		return Response.status(Status.OK).entity(criteria).build();
 	}
 
-
 	@POST
 	@Path("/grade")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -115,23 +114,11 @@ public class GraderResource {
 	   })
 	public Response saveGrade(@ApiParam(value = "grade") Grade grade) {
 		log.debug("Requested grade save: {}", grade);
-		if (grade.getIsSummary()) {
-			log.debug("Grader {} submitted summary with value {} and text{}", grade.getGraderId(), grade.getGradeValue(), grade.getGradeText());
-			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setSummaryScore(textByAnswer(grade, true));
-			if ((null == grader.getSummaryScore()) || (grader.getSummaryScore().isEmpty()))
-				log.warn("Grader {} summary score saved as {}", grade.getGraderId(), grader.getSummaryScore());
-			graderService.save(grader);
-		}
-		if (grade.getIsRelationship()) {
-			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setRelationship(textByAnswer(grade, true));			
-			graderService.save(grader);
-		}
 		if ((null == grade.getGradeText()) || (grade.getGradeText().isEmpty())) grade.setGradeText(textByAnswer(grade, false));
+		if (grade.getIsSummary()) graderService.setSummary(grade.getGraderId(),textByAnswer(grade, true));
+		if (grade.getIsRelationship()) graderService.setRelationship(grade.getGraderId(), textByAnswer(grade, true));			
 		Grade savedGrade = graderService.saveGrade(grade);
 		log.debug("Saved grade {}", savedGrade);
-
 		return Response.status(Status.CREATED).entity(savedGrade).build();
 	}
 
@@ -146,7 +133,7 @@ public class GraderResource {
 			@Context final HttpServletRequest reqt,
 			@ApiParam(value = "grader id") @PathParam("uuid") UUID uuId) {
 		log.debug("Requested grader id: {} status update to {}", uuId, Grader.STATUS_COMPLETED);
-		Grader grader = graderService.getGraderByUuid(uuId);
+		Grader grader = graderService.getGraderByUuid(uuId);		
 		if (grader != null) {
 			grader.setUserAgent(reqt.getHeader("User-Agent"));
 			grader.setIpAddress(reqt.getRemoteAddr());
