@@ -460,23 +460,23 @@ function isSectionAudio(section){
 }
 
 function buildAudioSection(deck,section) {
-	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
+	var pagecount = $(deck).children().length + 1; // if pre-amble then one more page for instructions
 	pagination = [];
-	pagination[pagecount] = [];
-	var pageqs = pagination[pagecount];
+	pagination[2] = []; // hard coded 
+	var pageqs = pagination[2];
 	var qcount = 0;
 	for (var key in questions) {
 		if (questions[key].page != section.sectionNumber) continue;
 		pageqs[qcount] = questions[key];
 		qcount++;
 	}
-	totalpages = 2;
+	totalpages = pagecount;
 
 	var card = $('<div />', {'class' : 'questionpage item'});
-	
+	if (pagecount == 1) card.addClass('active'); // because its the only page.
+	$(deck).append(card);
 	$(card).load('/components/callme.htm', function() {
 		card.attr('page-type',3);
-		card.appendTo(deck);		
 		$('#callMePhone').bind('input', function (e) {
 			  var x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
 			  e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
@@ -558,7 +558,7 @@ function callMe() {
 function buildSurveySection(deck, section) {
 	
 	if (isSectionAudio(section)) return buildAudioSection(deck,section);
-	
+
 	var pagecount = $(deck).children().length + 1; // starts at two, assumes pre-amble and instructions
 	pagination = new Array();
 	var qlimit = section.questionsPerPage; // questions per page

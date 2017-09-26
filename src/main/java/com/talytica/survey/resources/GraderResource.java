@@ -104,7 +104,6 @@ public class GraderResource {
 		return Response.status(Status.OK).entity(criteria).build();
 	}
 
-
 	@POST
 	@Path("/grade")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -115,20 +114,11 @@ public class GraderResource {
 	   })
 	public Response saveGrade(@ApiParam(value = "grade") Grade grade) {
 		log.debug("Requested grade save: {}", grade);
-		if (grade.getIsSummary()) {
-			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setSummaryScore(textByAnswer(grade, true));
-			graderService.save(grader);
-		}
-		if (grade.getIsRelationship()) {
-			Grader grader = graderService.getGraderById(grade.getGraderId());
-			grader.setRelationship(textByAnswer(grade, true));			
-			graderService.save(grader);
-		}
 		if ((null == grade.getGradeText()) || (grade.getGradeText().isEmpty())) grade.setGradeText(textByAnswer(grade, false));
+		if (grade.getIsSummary()) graderService.setSummary(grade.getGraderId(),textByAnswer(grade, true));
+		if (grade.getIsRelationship()) graderService.setRelationship(grade.getGraderId(), textByAnswer(grade, true));			
 		Grade savedGrade = graderService.saveGrade(grade);
 		log.debug("Saved grade {}", savedGrade);
-
 		return Response.status(Status.CREATED).entity(savedGrade).build();
 	}
 
@@ -143,7 +133,7 @@ public class GraderResource {
 			@Context final HttpServletRequest reqt,
 			@ApiParam(value = "grader id") @PathParam("uuid") UUID uuId) {
 		log.debug("Requested grader id: {} status update to {}", uuId, Grader.STATUS_COMPLETED);
-		Grader grader = graderService.getGraderByUuid(uuId);
+		Grader grader = graderService.getGraderByUuid(uuId);		
 		if (grader != null) {
 			grader.setUserAgent(reqt.getHeader("User-Agent"));
 			grader.setIpAddress(reqt.getRemoteAddr());
@@ -173,17 +163,18 @@ public class GraderResource {
 		} 
 		return Response.seeOther(new URI("/thankyou.htm")).build();
 	}
-
 	
 	private String textByAnswer(Grade grade, Boolean forceResponse) {
+		if ((grade.getGradeText() != null) && (!grade.getGradeText().isEmpty())) return grade.getGradeText();
 		Question question = questionService.getQuestionById(grade.getQuestionId());
 		Set<Answer> answers = question.getAnswers();
+		if (answers.size() > 0) log.debug("Grade {} consulting {} answers for text", grade.getGraderId(),answers.size());
 		for (Answer answer : answers) {
 			if (answer.getAnswerValue() == grade.getGradeValue()) return answer.getAnswerText();
 		}
 
 		if (forceResponse) return String.format("%d", grade.getGradeValue());
-
-		return null;
+		log.debug("No answer forced, returning empty grade");
+		return grade.getGradeText();
 	}
 }

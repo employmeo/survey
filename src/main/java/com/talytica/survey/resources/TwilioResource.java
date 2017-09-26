@@ -2,10 +2,12 @@ package com.talytica.survey.resources;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -315,21 +317,15 @@ public class TwilioResource {
 	
 	private SurveyQuestion nextQuestion(Respondant respondant) {
 		SurveyQuestion nextQuestion = null;
-		List<SurveyQuestion> questions = new ArrayList<SurveyQuestion>(respondant.getAccountSurvey().getSurvey().getSurveyQuestions());
-		questions.sort(new Comparator<SurveyQuestion>() {
-			public int compare(SurveyQuestion sq1, SurveyQuestion sq2) {
-		    	int result = sq1.getPage() - sq2.getPage();
-		    	if (result == 0) result = sq1.getSequence() - sq2.getSequence();
-		    	return result;
-			}
-		});
-		
-		// get responses
-		List<Response> responses = new ArrayList<Response>(respondant.getResponses());
+		List<SurveyQuestion> questions = respondant.getAccountSurvey().getSurvey().getSurveyQuestions().stream()
+				.filter(surveyQuestion -> VOICE_QUESTION_TYPE == surveyQuestion.getQuestion().getQuestionType())
+                .collect(Collectors.toList());
+		Collections.sort(questions);
+		Set<Response> responses = respondantService.getResponsesToQuestions(respondant.getId(),questions);
 
+		log.debug("{} audio questions with {} associated responses", questions.size(),responses.size());
 		for (SurveyQuestion question : questions) {
 			boolean isAnswered = false;
-			if (!question.getQuestion().getQuestionType().equals(VOICE_QUESTION_TYPE)) break;
 			for (Response answer : responses) {
 				if (question.getQuestion().getQuestionId().equals(answer.getQuestionId())) {
 					isAnswered = true;
