@@ -331,9 +331,9 @@ function submitGrader(grader) {
         url: servicePath + 'grader/'+grader.uuId+'/submit',
         success: function(data)
         {
-        	if (redirect != null) {
-                window.location.assign(redirect);        		
-        	}
+        	//if (redirect != null) {
+            //    window.location.assign(redirect);        		
+        	//}
         }
       });	
 }
