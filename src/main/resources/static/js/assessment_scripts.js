@@ -296,15 +296,19 @@ function buildGraderPreamble() {
 	$(deck).empty();
 	totalpages = 1;
 	
+	var preambleText = '[FIRSTNAME] [LASTNAME] has requested your input on their job application. This ' +
+	'short questionnaire should take less than 2 minutes to complete. To proceed, please click the ' + 
+	'"continue" button below. If you do not wish to provide input, please click the "decline" button.';
+	if (grader.rcConfig && grader.rcConfig.preamble) preambleText = grader.rcConfig.preamble;	
+	preambleText = preambleText.replace('[FIRSTNAME]',grader.respondant.person.firstName);
+	preambleText = preambleText.replace('[LASTNAME]',grader.respondant.person.lastName);
+	preambleText = preambleText.replace('[ACCOUNTNAME]',grader.account.accountName);
+
 	var preamble = $('<div />', {'class' : 'item active'});	
 	preamble.append(getHrDiv());
-	var body = $('<div />', { 'class' : 'col-xs-12' });
+	var body = $('<div />', { 'class' : 'col-xs-12' });	
 	body.append($('<h3 />',{'text':'Reference for ' + grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName }));
-	body.append($('<p />',{'text': grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName + 
-		' has requested your input on their job application. This short questionnaire should take less than 2 ' +
-		'minutes to complete. To proceed, please click the "continue" button below. If you do not wish to ' +
-		'provide input, please click the "decline" button.'
-		}));
+	body.append($('<p />',{'text': preambleText	}));
 	preamble.append(body);
 	preamble.append(getHrDiv());
 
@@ -381,7 +385,37 @@ function buildGraderForm() {
 		isPageComplete(1);
 	}	
 }
+function graderConfirmation(grader) {
+	$('#navtitle').text('Thank You');
+	var deck = document.getElementById('wrapper');
+	$(deck).empty();
+	totalpages = 1;
+	var card = $('<div />', {
+		'class' : 'item active'
+	});
+	card.append(getHrDiv());			
+	var preamble = $('<div />', {'class' : 'item active'});	
+	preamble.append(getHrDiv());
+	var body = $('<div />', { 'class' : 'col-xs-12' });	
+	body.append($('<h3 />',{'class':'text-center', 'text':'We have received your submission' }));
+	body.append($('<h4 />',{'class':'text-center', 'text': 'This questionaire is complete. You may now close this browser window.' }));	
+	preamble.append(body);
+	preamble.append(getHrDiv());
 
+	var navigation = $('<div />', {'class': 'container-fluid'});
+	var redirect = 'https://talytica.com';
+	if (grader.account.defaultRedirect) redirect = grader.account.defaultRedirect;
+	if ((grader.rcConfig) && (grader.rcConfig.redirectPage)) redirect = grader.rcConfig.redirectPage;
+	
+	navigation.append($('<div />', {'class': 'col-xs-12 text-center'}).append($('<a />', {
+		'class' : 'btn btn-primary',
+		'text' : 'Ok',
+		'href':redirect
+	})));
+	preamble.append(navigation);
+	preamble.appendTo(deck);
+	$('#wait').addClass('hidden');
+}
 
 // Code for building survey pages.
 function buildStaticLinkView() {
@@ -1445,7 +1479,7 @@ function getSurveyNav(pagecount, totalpages, pageType) {
 function submitSection() {
 	var deck = document.getElementById('wrapper');
 	if (grader) {
-		submitGrader(grader);		
+		$.when(submitGrader(grader)).done(function() {graderConfirmation(grader)});
 	} else {
 		activeSection.complete=true;
 		if (endAt != null) {
