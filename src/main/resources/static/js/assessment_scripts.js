@@ -300,9 +300,9 @@ function buildGraderPreamble() {
 	'short questionnaire should take less than 2 minutes to complete. To proceed, please click the ' + 
 	'"continue" button below. If you do not wish to provide input, please click the "decline" button.';
 	if (grader.rcConfig && grader.rcConfig.preamble) preambleText = grader.rcConfig.preamble;	
-	preambleText = preambleText.replace('[FIRSTNAME]',grader.respondant.person.firstName);
-	preambleText = preambleText.replace('[LASTNAME]',grader.respondant.person.lastName);
-	preambleText = preambleText.replace('[ACCOUNTNAME]',grader.account.accountName);
+	preambleText = preambleText.split('[FIRSTNAME]').join(grader.respondant.person.firstName);
+	preambleText = preambleText.split('[LASTNAME]').join(grader.respondant.person.lastName);
+	preambleText = preambleText.split('[ACCOUNTNAME]').join(grader.account.accountName);
 
 	var preamble = $('<div />', {'class' : 'item active'});	
 	preamble.append(getHrDiv());
