@@ -298,7 +298,7 @@ function buildGraderPreamble() {
 	
 	var preambleText = '[FIRSTNAME] [LASTNAME] has requested your input on their job application. This ' +
 	'short questionnaire should take less than 2 minutes to complete. To proceed, please click the ' + 
-	'"continue" button below. If you do not wish to provide input, please click the "decline" button.';
+	'"Provide Input" button below. If you do not wish to provide input, please click the "decline" button.';
 	if (grader.rcConfig && grader.rcConfig.preamble) preambleText = grader.rcConfig.preamble;	
 	preambleText = preambleText.split('[FIRSTNAME]').join(grader.respondant.person.firstName);
 	preambleText = preambleText.split('[LASTNAME]').join(grader.respondant.person.lastName);
@@ -321,7 +321,7 @@ function buildGraderPreamble() {
 	navigation.append($('<div />', {'class': 'col-xs-4 col-sm-4 col-md-4 text-center'}));
 	navigation.append($('<div />', {'class': 'col-xs-4 col-sm-4 col-md-4 text-center'}).append($('<button />', {
 		'class' : 'btn btn-primary',
-		'text' : "Continue",
+		'text' : "Provide Input",
 		'onClick':'buildGraderForm();'
 	})));
 	
