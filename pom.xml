@@ -12,11 +12,11 @@
 	<artifactId>survey</artifactId>
 	<name>Talytica Survey</name>
 	<description>Talytica Survey API Components</description>
-	<version>0.0.33</version>
+	<version>0.0.34-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
-		<persistence-unit.version>0.1.9</persistence-unit.version>
+		<persistence-unit.version>0.1.10-SNAPSHOT</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
