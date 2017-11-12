@@ -40,7 +40,7 @@ public class ResponseResource {
 	
 	@GET
 	@Path("/{uuid}")
-	@ApiOperation(value = "Gets the Respondant for a given Uuid", response = com.employmeo.data.model.Response.class)
+	@ApiOperation(value = "Gets the Responses for a given Uuid", response = com.employmeo.data.model.Response.class)
 	   @ApiResponses(value = {
 			     @ApiResponse(code = 200, message = "Respondant found"),
 			     @ApiResponse(code = 404, message = "Unable to associate this id with a respondant.")
