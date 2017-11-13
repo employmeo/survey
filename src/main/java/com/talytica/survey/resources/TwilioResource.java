@@ -131,7 +131,7 @@ public class TwilioResource {
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
 			Response savedRecording = respondantService.saveResponse(recording);
-			respondant.getResponses().add(savedRecording);
+			//respondant.get-Responses-().add(savedRecording);
 		}
 
 		// present the next question		
