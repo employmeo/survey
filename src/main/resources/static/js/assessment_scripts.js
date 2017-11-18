@@ -398,7 +398,7 @@ function graderConfirmation(grader) {
 	preamble.append(getHrDiv());
 	var body = $('<div />', { 'class' : 'col-xs-12' });	
 	body.append($('<h3 />',{'class':'text-center', 'text':'We have received your submission' }));
-	body.append($('<h4 />',{'class':'text-center', 'text': 'This questionaire is complete. You may now close this browser window.' }));	
+	body.append($('<h4 />',{'class':'text-center', 'text': 'This questionnaire is complete. You may now close this browser window.' }));	
 	preamble.append(body);
 	preamble.append(getHrDiv());
 
