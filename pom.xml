@@ -16,7 +16,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<persistence-unit.version>0.1.12</persistence-unit.version>
+		<persistence-unit.version>0.1.16</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

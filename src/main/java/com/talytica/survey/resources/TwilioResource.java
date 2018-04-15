@@ -63,7 +63,8 @@ public class TwilioResource {
 	public static final String ACCOUNT_SID = "ACb3a52494a925f62584668bed5d3b32d8"; 
 	public static final String AUTH_TOKEN = "c05e3eef5c79eb06bcbb0ff00a99769e"; 
 	 
-	private final int DEFAULT_RECORDING_LENGTH = 120;
+	private final int DEFAULT_RECORDING_LENGTH = 480;
+	private final int DEFAULT_RECORDING_TIMEOUT = 5;
 	private final int VOICE_QUESTION_TYPE = 16;
     private final String COMPLETED_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/InterviewComplete.mp3";
     private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatchTryAgain.mp3";
@@ -115,6 +116,7 @@ public class TwilioResource {
 			@ApiParam(value = "Respondant ID") @PathParam("respondantId") Long respondantId,
 			@ApiParam(value = "Question ID") @PathParam("questionId") Long questionId,
 			@ApiParam(value = "From") @FormParam("From") String twiFrom,
+			@ApiParam(value = "Digits") @FormParam("Digits") String digits,
 			@ApiParam(value = "RecordingUrl") @FormParam("RecordingUrl") String recUrl,
 			@ApiParam(value = "RecordingDuration") @FormParam("RecordingDuration") Integer recDuration) {
 		
@@ -122,6 +124,10 @@ public class TwilioResource {
 				twiFrom, recUrl, respondantId, questionId);
 		
 		Respondant respondant = respondantService.getRespondantById(respondantId);
+		if ((recDuration <= DEFAULT_RECORDING_TIMEOUT)&&((null == digits)||(digits.isEmpty()))) {
+			log.debug("Empty ({} second) recording: {}", recDuration, recUrl);
+			recUrl = null; // don't accept
+		}
 		if ((questionId != null) && (recUrl != null)) {
 			// Save the response
 			Response recording = new Response();
@@ -130,8 +136,7 @@ public class TwilioResource {
 			recording.setResponseMedia(recUrl);
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
-			Response savedRecording = respondantService.saveResponse(recording);
-			//respondant.get-Responses-().add(savedRecording);
+			respondantService.saveResponse(recording);
 		}
 
 		// present the next question		
@@ -273,6 +278,7 @@ public class TwilioResource {
 	        }
 	        Record record = new Record();
 	        record.setMethod("POST");
+	        record.setTimeout(DEFAULT_RECORDING_TIMEOUT);
 	        record.setAction(BASE_SURVEY_URL + "/survey/1/twilio/capture/" + 
 	            respondant.getId() + "/"  + nextQuestion.getQuestion().getQuestionId());
 	        
