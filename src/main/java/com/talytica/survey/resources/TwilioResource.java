@@ -3,7 +3,6 @@ package com.talytica.survey.resources;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +18,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -36,16 +33,19 @@ import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
 import com.talytica.common.service.ExternalLinksService;
 import com.talytica.survey.objects.CallMeRequest;
-import com.twilio.sdk.TwilioRestClient;
-import com.twilio.sdk.resource.factory.CallFactory;
-import com.twilio.sdk.resource.instance.Call;
-import com.twilio.sdk.verbs.Gather;
-import com.twilio.sdk.verbs.Play;
-import com.twilio.sdk.verbs.Record;
-import com.twilio.sdk.verbs.Redirect;
-import com.twilio.sdk.verbs.Say;
-import com.twilio.sdk.verbs.TwiMLException;
-import com.twilio.sdk.verbs.TwiMLResponse;
+import com.twilio.Twilio;
+import com.twilio.http.HttpMethod;
+import com.twilio.http.TwilioRestClient;
+import com.twilio.rest.api.v2010.account.Call;
+import com.twilio.rest.api.v2010.account.CallCreator;
+import com.twilio.twiml.TwiMLException;
+import com.twilio.twiml.VoiceResponse;
+import com.twilio.twiml.voice.Gather;
+import com.twilio.twiml.voice.Play;
+import com.twilio.twiml.voice.Record;
+import com.twilio.twiml.voice.Redirect;
+import com.twilio.twiml.voice.Say;
+import com.twilio.type.PhoneNumber;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -59,11 +59,9 @@ import lombok.extern.slf4j.Slf4j;
 @Path("/1/twilio")
 @Api( value="/1/twilio", produces=MediaType.APPLICATION_XML, consumes=MediaType.APPLICATION_FORM_URLENCODED)
 public class TwilioResource {
-	
-	public static final String ACCOUNT_SID = "ACb3a52494a925f62584668bed5d3b32d8"; 
-	public static final String AUTH_TOKEN = "c05e3eef5c79eb06bcbb0ff00a99769e"; 
 	 
-	private final int DEFAULT_RECORDING_LENGTH = 120;
+	private final int DEFAULT_RECORDING_LENGTH = 480;
+	private final int DEFAULT_RECORDING_TIMEOUT = 10;
 	private final int VOICE_QUESTION_TYPE = 16;
     private final String COMPLETED_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/InterviewComplete.mp3";
     private final String NO_MATCH_AUDIO = "https://s3.amazonaws.com/talytica/media/audio/UnableToMatchTryAgain.mp3";
@@ -73,6 +71,11 @@ public class TwilioResource {
 	
 	@Value("${com.talytica.urls.assessment}")
 	public String BASE_SURVEY_URL;
+	@Value("${com.talytica.apis.twilio.sid}")
+	private String ACCOUNT_SID;
+	@Value("${com.talytica.apis.twilio.token}")
+	private String AUTH_TOKEN;
+	
 	
 	@Autowired
 	RespondantService respondantService;
@@ -115,6 +118,7 @@ public class TwilioResource {
 			@ApiParam(value = "Respondant ID") @PathParam("respondantId") Long respondantId,
 			@ApiParam(value = "Question ID") @PathParam("questionId") Long questionId,
 			@ApiParam(value = "From") @FormParam("From") String twiFrom,
+			@ApiParam(value = "Digits") @FormParam("Digits") String digits,
 			@ApiParam(value = "RecordingUrl") @FormParam("RecordingUrl") String recUrl,
 			@ApiParam(value = "RecordingDuration") @FormParam("RecordingDuration") Integer recDuration) {
 		
@@ -122,6 +126,10 @@ public class TwilioResource {
 				twiFrom, recUrl, respondantId, questionId);
 		
 		Respondant respondant = respondantService.getRespondantById(respondantId);
+		if ((recDuration <= DEFAULT_RECORDING_TIMEOUT)&&((null == digits)||(digits.isEmpty()))) {
+			log.debug("Empty ({} second) recording: {}", recDuration, recUrl);
+			recUrl = null; // don't accept
+		}
 		if ((questionId != null) && (recUrl != null)) {
 			// Save the response
 			Response recording = new Response();
@@ -130,20 +138,19 @@ public class TwilioResource {
 			recording.setResponseMedia(recUrl);
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
-			Response savedRecording = respondantService.saveResponse(recording);
-			//respondant.get-Responses-().add(savedRecording);
+			respondantService.saveResponse(recording);
 		}
 
 		// present the next question		
-		TwiMLResponse twiML = new TwiMLResponse();
+		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
 		try {
 			nextQuestionTwiML(twiML, respondant);
 		} catch (TwiMLException e) {
 			e.printStackTrace();
 		}
 
-		log.debug("Twilio Capture Recording returned {}", twiML.toEscapedXML());
-		return twiML.toEscapedXML();
+		log.debug("Twilio Capture Recording returned {}", twiML.build().toXml());
+		return twiML.build().toXml();
 		
 	}
 
@@ -154,15 +161,15 @@ public class TwilioResource {
 	public String nextQuestion(@ApiParam(value = "Respondant ID") @PathParam("respondantId") Long respondantId) {
 		
 		Respondant respondant = respondantService.getRespondantById(respondantId);
-		TwiMLResponse twiML = new TwiMLResponse();
+		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
 		try {
 			nextQuestionTwiML(twiML, respondant);
 		} catch (TwiMLException e) {
 			e.printStackTrace();
 		}
 		
-		log.debug("Twilio Next Question returned {}", twiML.toEscapedXML());
-		return twiML.toEscapedXML();
+		log.debug("Twilio Capture Recording returned {}", twiML.build().toXml());
+		return twiML.build().toXml();
 		
 	}
 
@@ -176,44 +183,42 @@ public class TwilioResource {
 			@ApiParam(value = "Digits") @QueryParam("Digits") String twiDigits) {	
 		log.info("twilio requested findby id pathparam asid: {} queryparam digits: {}", asId, twiDigits);
 		Respondant resp = respondantService.getRespondantByAccountSurveyIdAndPayrollId(asId, twiDigits);
-	    TwiMLResponse twiML = new TwiMLResponse();
+		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
 	    try {
 	    	if (resp != null) {
 	    		if (resp.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
-		    		Play sorry = new Play(COMPLETED_AUDIO);
-		    		twiML.append(sorry);
+		    		twiML.play(new Play.Builder(COMPLETED_AUDIO).build());
 	    		} else {
 		    		AccountSurvey as = resp.getAccountSurvey();
 		    		String preambleMedia = as.getPreambleMedia();
 	
-		    		Say found = new Say("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." );
-			    	twiML.append(found);
+		    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
+			    	twiML.say(found);
 	
 		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
-		    			Play instructions = new Play(preambleMedia);
-		    			twiML.append(instructions);
+		    			twiML.play(new Play.Builder(preambleMedia).build());
 		    		} else {
-		    			Say instructions = new Say(as.getPreambleText());
-		    			twiML.append(instructions);
+		    			twiML.say(new Say.Builder(as.getPreambleText()).build());
 		    		}       	
 			    	
 		        	nextQuestionTwiML(twiML, resp);
 	    		}
 	    	} else {
-	    		Play sorry = new Play(NO_MATCH_AUDIO);
-	    		Gather gather = new Gather();
-	    		gather.setAction(BASE_SURVEY_URL+"/survey/1/twilio/"+asId+"/findbyid");
-	    		gather.setMethod("GET");
-	    		twiML.append(sorry);
-	    		twiML.append(gather);
+	    		Play sorry = new Play.Builder(NO_MATCH_AUDIO).build();
+	    		Gather gather = new Gather.Builder()
+	    				.action(BASE_SURVEY_URL+"/survey/1/twilio/"+asId+"/findbyid")
+	    				.method(HttpMethod.GET)
+	    				.build();
+	    		twiML.play(sorry);
+	    		twiML.gather(gather);
 	    		log.warn("No Match: Caller {} provided id: {} ", twiFrom, twiDigits);
 	    	}
 	    } catch (TwiMLException e) {
 	        e.printStackTrace();
 	    }
 	    
-		log.debug("Twilio Find By ID returned {}", twiML.toEscapedXML());
-	    return twiML.toEscapedXML();	
+		log.debug("Twilio Find By ID returned {}", twiML.build().toXml());
+	    return twiML.build().toXml();	
 		
 	}
 	
@@ -223,24 +228,27 @@ public class TwilioResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiOperation(value = "Places outbound call")
 	public CallMeRequest callMe(@ApiParam(value = "Call Me Request") CallMeRequest request) throws Exception {
-		TwilioRestClient client = new TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN); 
+		Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+		TwilioRestClient client = Twilio.getRestClient();
 		Respondant respondant = respondantService.getRespondant(request.uuid);
 		
 		// Build the parameters 
-		List<NameValuePair> params = new ArrayList<NameValuePair>(); 
-		params.add(new BasicNameValuePair("To", request.phoneNumber)); 
-		params.add(new BasicNameValuePair("From", respondant.getAccountSurvey().getPhoneNumber())); 
-		params.add(new BasicNameValuePair("Url", externalLinksService.getCallMeLink(respondant))); 
-		params.add(new BasicNameValuePair("Method", "GET")); 
-	    params.add(new BasicNameValuePair("StatusCallback", externalLinksService.getCallStatusLink()));
-	    params.add(new BasicNameValuePair("StatusCallbackMethod", "POST"));
-	    params.add(new BasicNameValuePair("StatusCallbackEvent", "initiated"));
-	    params.add(new BasicNameValuePair("StatusCallbackEvent", "ringing"));
-	    params.add(new BasicNameValuePair("StatusCallbackEvent", "answered"));
-	    params.add(new BasicNameValuePair("StatusCallbackEvent", "completed"));
+		List<String> params = new ArrayList<String>(); 
+	    params.add("initiated");
+	    params.add("ringing");
+	    params.add("answered");
+	    params.add("completed");
 		
-		CallFactory callFactory = client.getAccount().getCallFactory(); 
-		Call call = callFactory.create(params); 
+	    PhoneNumber to = new PhoneNumber(request.phoneNumber);
+	    PhoneNumber from = new PhoneNumber(respondant.getAccountSurvey().getPhoneNumber());
+	     
+	    CallCreator creator = new CallCreator(to, from, externalLinksService.getCallMeLink(respondant));
+	    creator.setMethod(HttpMethod.GET);
+	    creator.setStatusCallbackMethod(HttpMethod.POST);
+	    creator.setStatusCallback(externalLinksService.getCallStatusLink());
+	    creator.setStatusCallbackEvent(params);
+	    
+	    Call call = creator.create(client);			
 		log.debug("Outbound call id {}, made to {}",call.getSid(),request.phoneNumber);
 		request.sid = call.getSid();
 		return request;
@@ -257,51 +265,58 @@ public class TwilioResource {
 		simpMessagingTemplate.convertAndSend("/calls/"+callSid, status);
 	}
 	
-	private void nextQuestionTwiML(TwiMLResponse twiML, Respondant respondant) throws TwiMLException {
+	private void nextQuestionTwiML(VoiceResponse.Builder twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
 	    SurveyQuestion nextQuestion = nextQuestion(respondant);
         if (nextQuestion != null) {  
-	        Say prompt = new Say("Question " + nextQuestion.getSequence() + ". ");
-	        twiML.append(prompt);
+	        Say prompt = new Say.Builder("Question " + nextQuestion.getSequence() + ". ").build();
+	        twiML.say(prompt);
 	        String media = nextQuestion.getQuestion().getQuestionMedia();
 	        if ((media != null) && (!media.isEmpty())) {
-	        	Play ques = new Play(media);
-	        	twiML.append(ques);
+	        	Play ques = new Play.Builder(media).build();
+	        	twiML.play(ques);
 	        } else {
-	        	Say ques = new Say(nextQuestion.getQuestion().getQuestionText());
-	        	twiML.append(ques);
+	        	Say ques = new Say.Builder(nextQuestion.getQuestion().getQuestionText()).build();
+	        	twiML.say(ques);
 	        }
-	        Record record = new Record();
-	        record.setMethod("POST");
-	        record.setAction(BASE_SURVEY_URL + "/survey/1/twilio/capture/" + 
-	            respondant.getId() + "/"  + nextQuestion.getQuestion().getQuestionId());
+	        
 	        
 	        Integer length = null;
 	        Set<Answer> answers = nextQuestion.getQuestion().getAnswers();
 	        for (Answer ans : answers) {
 	        	length = ans.getAnswerValue();
-	        	record.setMaxLength(length);
 	        	break;
 	        }
-	        if (null == length) record.setMaxLength(DEFAULT_RECORDING_LENGTH);
+	        if (null == length) length = DEFAULT_RECORDING_LENGTH;
+	        
+	        Record record = new Record.Builder()
+	        	.method(HttpMethod.POST)
+	        	.maxLength(length)
+	        	.timeout(DEFAULT_RECORDING_TIMEOUT)
+	        	.action(BASE_SURVEY_URL + "/survey/1/twilio/capture/" + 
+	            respondant.getId() + "/"  + nextQuestion.getQuestion().getQuestionId())
+	        	.build();
+	        
 	
-	        Play tryagain = new Play(NO_RESPONSE_AUDIO);
-	        Redirect redirect = new Redirect(BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + respondant.getId());
-	        redirect.setMethod("GET");
-	    	twiML.append(record);
-	    	twiML.append(tryagain);
-	    	twiML.append(redirect);
+	        Play tryagain = new Play.Builder(NO_RESPONSE_AUDIO).build();
+	        Redirect redirect = new Redirect.Builder(BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + respondant.getId())
+	        		.method(HttpMethod.GET)
+	        		.build();
+
+	    	twiML.record(record);
+	    	twiML.play(tryagain);
+	    	twiML.redirect(redirect);
 
         } else if (Survey.TYPE_MULTI == respondant.getAccountSurvey().getSurvey().getSurveyType()) {  	
         	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
         	if (null == thankyouMedia) thankyouMedia = RETURNTOBROWSER;
-	        Play goodbye = new Play(thankyouMedia);
-    	    twiML.append(goodbye);
+	        Play goodbye = new Play.Builder(thankyouMedia).build();
+    	    twiML.play(goodbye);
         } else {   	
         	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
         	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;
-	        Play goodbye = new Play(thankyouMedia);
-    	    twiML.append(goodbye);
+	        Play goodbye = new Play.Builder(thankyouMedia).build();
+    	    twiML.play(goodbye);
     	    
     	    // Submit the Survey
 			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
