@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.6.RELEASE</version>
+		<version>2.0.1.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -12,11 +12,11 @@
 	<artifactId>survey</artifactId>
 	<name>Talytica Survey</name>
 	<description>Talytica Survey API Components</description>
-	<version>0.0.35</version>
+	<version>0.0.36-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<properties>
-		<persistence-unit.version>0.1.16</persistence-unit.version>
+		<persistence-unit.version>0.1.17-SNAPSHOT</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
