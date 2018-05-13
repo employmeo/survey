@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.1.RELEASE</version>
+		<version>1.5.7.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -16,7 +16,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<persistence-unit.version>0.1.17-SNAPSHOT</persistence-unit.version>
+		<persistence-unit.version>0.2.0-SNAPSHOT</persistence-unit.version>
 		<start-class>com.talytica.survey.SurveyApplication</start-class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -45,7 +45,7 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.employmeo</groupId>
+			<groupId>com.talytica</groupId>
 			<artifactId>persistence</artifactId>
 			<version>${persistence-unit.version}</version>
 		</dependency>
