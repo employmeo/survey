@@ -1,5 +1,6 @@
 package com.talytica.survey.resources;
 
+import java.net.URI;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -242,7 +243,7 @@ public class TwilioResource {
 	    PhoneNumber to = new PhoneNumber(request.phoneNumber);
 	    PhoneNumber from = new PhoneNumber(respondant.getAccountSurvey().getPhoneNumber());
 	     
-	    CallCreator creator = new CallCreator(to, from, externalLinksService.getCallMeLink(respondant));
+	    CallCreator creator = new CallCreator(to, from, new URI(externalLinksService.getCallMeLink(respondant)));
 	    creator.setMethod(HttpMethod.GET);
 	    creator.setStatusCallbackMethod(HttpMethod.POST);
 	    creator.setStatusCallback(externalLinksService.getCallStatusLink());
