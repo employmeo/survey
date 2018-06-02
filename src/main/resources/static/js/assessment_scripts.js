@@ -423,9 +423,16 @@ function buildStaticLinkView() {
 	var deck = document.getElementById('wrapper');
 	$(deck).empty();
 	var component = survey.staticLinkView || 'newresp.htm';
-	$(deck).load('/components/'+ component, function () {
-		$('#asid').val(survey.id);
-	});
+	if (component.startsWith("http")) {
+		$(deck).load(component, function () {
+			$('#asid').val(survey.id);
+		});			
+	} else {
+		$(deck).load('/components/'+ component, function () {
+			$('#asid').val(survey.id);
+		});	
+	}
+
 	$('#wait').addClass('hidden');
 }
 
