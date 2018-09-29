@@ -222,6 +222,56 @@ public class TwilioResource {
 	    return twiML.build().toXml();	
 		
 	}
+
+	@GET
+	@Path("/findbyrespondant")
+	@Produces(MediaType.APPLICATION_XML)
+	@ApiOperation(value = "Finds survey and returns twiml with instructions and first question")
+	public String findRespondantSurvey(
+			@ApiParam(value = "From") @QueryParam("From") String twiFrom,
+			@ApiParam(value = "Digits") @QueryParam("Digits") String twiDigits) {
+		Long respondantId = Long.valueOf(twiDigits);
+		log.info("twilio requested findby id respondant id: {}",respondantId);
+		Respondant resp = respondantService.getRespondantById(respondantId);
+		
+		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
+	    try {
+	    	if (resp != null) {
+	    		if (resp.getRespondantStatus() >= Respondant.STATUS_COMPLETED) {
+		    		twiML.play(new Play.Builder(COMPLETED_AUDIO).build());
+	    		} else {
+		    		AccountSurvey as = resp.getAccountSurvey();
+		    		String preambleMedia = as.getPreambleMedia();
+	
+		    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
+			    	twiML.say(found);
+	
+		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
+		    			twiML.play(new Play.Builder(preambleMedia).build());
+		    		} else {
+		    			twiML.say(new Say.Builder(as.getPreambleText()).build());
+		    		}       	
+			    	
+		        	nextQuestionTwiML(twiML, resp);
+	    		}
+	    	} else {
+	    		Play sorry = new Play.Builder(NO_MATCH_AUDIO).build();
+	    		Gather gather = new Gather.Builder()
+	    				.action(BASE_SURVEY_URL+"/survey/1/findbyrespondant")
+	    				.method(HttpMethod.GET)
+	    				.build();
+	    		twiML.play(sorry);
+	    		twiML.gather(gather);
+	    		log.warn("No Match: Caller {} provided id: {} ", twiFrom, twiDigits);
+	    	}
+	    } catch (TwiMLException e) {
+	        e.printStackTrace();
+	    }
+	    
+		log.debug("Twilio Find By ID returned {}", twiML.build().toXml());
+	    return twiML.build().toXml();	
+		
+	}
 	
 	@POST
 	@Path("/callMe")
