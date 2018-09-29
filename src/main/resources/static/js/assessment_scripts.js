@@ -529,6 +529,7 @@ function buildAudioSection(deck,section) {
 		$('#audioInstructions').html(section.instructions);
 		$('#phoneNumber').text(survey.phoneNumber);
 		$('#idnumber').text(respondant.payrollId);
+		if (survey.price == 50) $('#idnumber').text(respondant.id);
 	})
 }
 
