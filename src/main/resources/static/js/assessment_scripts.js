@@ -62,6 +62,8 @@ function launchApp() {
 			   getCriteria(urlParams.graderUuid),
 			   getGrades(urlParams.graderUuid)).done(buildGraderPreamble);
 
+	} else if (urlParams.newgraderUuid != null) {
+		setUpNewGrader(urlParams.newgraderUuid);
 	} else {
 		showError({"responseText" : "No ID Provided"});
 	}
@@ -84,6 +86,17 @@ function submitNewRespondant() {
 		order[fields[i].name] = fields[i].value;
 	}
 	orderNewAssessment(order);
+}
+
+function submitNewGrader() {
+	$('#wait').removeClass('hidden');
+    var newGrader = {};
+	var fields = $('#newgraderform').serializeArray();
+	for (var i=0;i<fields.length;i++) {
+		newGrader[fields[i].name] = fields[i].value;
+	}
+	createGrader(newGrader);
+	return false;
 }
 
 function checkReferenceInput(form) {
@@ -414,6 +427,18 @@ function graderConfirmation(grader) {
 	})));
 	preamble.append(navigation);
 	preamble.appendTo(deck);
+	$('#wait').addClass('hidden');
+}
+
+//Code for building new grader page.
+function buildNewGraderView(respondant) {
+	// code to create a form to fill out for a new survey when no respondant present
+	var deck = document.getElementById('wrapper');
+	$(deck).empty();
+	$(deck).load('/components/newgrader.htm', function () {
+		$('#respUuid').val(respondant.respondantUuid);
+		$('#respName').text(respondant.person.firstName + ' ' + respondant.person.lastName);
+	});	
 	$('#wait').addClass('hidden');
 }
 

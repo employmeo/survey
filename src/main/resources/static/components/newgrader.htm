@@ -1,0 +1,44 @@
+<div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<h3>Reference Request by</h3>
+		<h3 id="respName">Candidate</h3>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<hr>
+	</div>
+	<div class="col-xs-12 col-sm-12 col-md-12">
+		<form class="form" id='newgraderform' onsubmit="return submitNewGrader();">
+			<input type="hidden" id="asid" name="asid">
+			<label for="fname">First Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+				<input class="form-control" type="text" name="fname" placeholder="First Name" required="required">
+			</div>
+			<label for="lname">Last Name:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+				<input class="form-control" type="text" name="lname" placeholder="Last Name" required="required">
+			</div>
+			<label for="email">E-mail Address:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-envelope fa-fw"></i></span>
+				<input class="form-control"
+					type="email" name="email" placeholder="email" required="required">
+			</div>
+			<label for="phone">Phone / Contact Number:</label>
+			<div class="input-group">
+				<span class="input-group-addon"><i class="fa fa-phone fa-fw"></i></span>
+				<input class="form-control"	name="phone" placeholder="(555) 555-1234">
+			</div>
+			<div class="col-xs-12 col-sm-12 col-md-12">
+				<hr>
+			</div>
+				<input type="hidden" name="respondantUuid" id="respUuid">
+				
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+	</div>
+</div>
