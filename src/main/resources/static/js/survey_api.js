@@ -242,12 +242,12 @@ function submitSurvey() {
       });	
 }
 
-function createGrader(grader) {
+function createGrader(newGrader) {
     return $.ajax({
         type: "POST",
         async: true,
         url: servicePath + 'grader/new',
-        data: JSON.stringify(grader),
+        data: JSON.stringify(newGrader),
         contentType: "application/json",
         headers : {
 		    'Content-Type': 'application/json',
@@ -256,9 +256,9 @@ function createGrader(grader) {
         },
         success: function(data) { 
         	grader = data;
-    		$.when(getCriteria(data.graderUuid)).done(buildGraderPreamble);
+    		$.when(getCriteria(grader.uuId)).done(buildGraderPreamble);
         },
-        error: function(data) {  window.alert('fail', grader, data);grader = null;}//showError(data); }
+        error: function(data) { grader = null;showError(data); }
     });
 }
 

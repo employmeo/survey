@@ -179,11 +179,11 @@ public class GraderResource {
 		grader.setAccountId(resp.getAccountId());
 		AccountSurvey aSurvey = resp.getAccountSurvey();
 		Set<SurveyQuestion> questions = aSurvey.getSurvey().getSurveyQuestions();
-		log.debug("questions are {}", questions);
+
 		Optional<SurveyQuestion> question = questions.stream()
-        .filter(sq -> sq.getQuestion().getScoringModel() == "reference")
-        .findFirst();
-		
+          .filter(sq -> questionService.getQuestionById(sq.getQuestionId()).getScoringModel().equalsIgnoreCase("reference"))
+          .findFirst();
+
 		grader.setUserAgent(reqt.getHeader("User-Agent"));
 		grader.setIpAddress(reqt.getRemoteAddr());
 		
@@ -192,8 +192,9 @@ public class GraderResource {
 		grader.setStatus(Grader.STATUS_STARTED);
 		
 		if(question.isPresent()) {
-			grader.setQuestion(question.get().getQuestion());
-			grader.setQuestionId(question.get().getQuestionId());
+			Question q = questionService.getQuestionById(question.get().getQuestionId());
+			grader.setQuestion(q);
+			grader.setQuestionId(q.getQuestionId());
 		}
 		grader.setRcConfig(aSurvey.getRcConfig());
 		grader.setRcConfigId(aSurvey.getRcConfigId());
