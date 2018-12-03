@@ -20,7 +20,7 @@ function setUpNewGrader(uuId) {
     return $.ajax({
         type: "GET",
         async: true,
-        url: servicePath + 'respondant/'+uuId,
+        url: servicePath + 'grader/respondant/'+uuId,
         success: function(data) { 
         	buildNewGraderView(data);
         },

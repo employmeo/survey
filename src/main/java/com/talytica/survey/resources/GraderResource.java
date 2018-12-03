@@ -1,6 +1,8 @@
 package com.talytica.survey.resources;
 
 import java.net.URI;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -151,6 +153,15 @@ public class GraderResource {
 			grader.setStatus(Grader.STATUS_COMPLETED);
 			Grader savedGrader = graderService.save(grader);
 			log.debug("Saved grader {}", savedGrader);
+			Respondant respondant = respondantService.getRespondantById(grader.getRespondantId());
+			if (respondant.getRespondantStatus() < Respondant.STATUS_UNGRADED) {
+				respondant.setRespondantStatus(Respondant.STATUS_UNGRADED);
+				respondantService.save(respondant);
+			} else if ((respondant.getRespondantStatus() < Respondant.STATUS_ADVUNGRADED) &&
+					(respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED)) {
+				respondant.setRespondantStatus(Respondant.STATUS_ADVUNGRADED);				
+				respondantService.save(respondant);
+			}
 			return Response.status(Status.CREATED).entity(savedGrader).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
@@ -223,6 +234,39 @@ public class GraderResource {
 			log.debug("Declined grader {}", savedGrader);
 		} 
 		return Response.seeOther(new URI("/thankyou.htm")).build();
+	}
+	
+	
+	@GET
+	@Path("/respondant/{uuid}")
+	@ApiOperation(value = "Gets the Respondant for a given Uuid", response = Respondant.class)
+	   @ApiResponses(value = {
+	     @ApiResponse(code = 200, message = "Respondant found"),
+	     @ApiResponse(code = 404, message = "Unable to associate this id with a candidate."),
+	     @ApiResponse(code = 410, message = "This respondant has enough completed references.")
+	   })
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRespondant(
+			@Context final HttpServletRequest reqt,
+			@ApiParam(value = "respondant uuid") @PathParam("uuid") @NotNull UUID uuid) {
+		log.debug("New Grader Requested respondant respondant by uuid {}", uuid);
+		
+		Respondant respondant = respondantService.getRespondant(uuid);
+		if (respondant != null) {
+			if ((respondant.getRespondantStatus() < Respondant.STATUS_SCORED) || 
+					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
+					(respondant.getRespondantStatus() < Respondant.STATUS_ADVSCORESADDED))) {
+				log.debug("Returning respondant {}", respondant);
+				return Response.status(Status.OK).entity(respondant).build();
+			} 
+			
+			return Response.status(Status.GONE).entity("This respondant has enough completed references.").build();
+
+		} else {
+			// TODO put in better error handling here.
+			log.debug("Respondant not found for uuid {}", uuid);
+			return Response.status(Status.NOT_FOUND).entity("Unable to associate this link with a candidate.").build();
+		}
 	}
 	
 	private String textByAnswer(Grade grade, Boolean forceResponse) {
