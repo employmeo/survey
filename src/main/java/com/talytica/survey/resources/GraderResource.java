@@ -1,7 +1,10 @@
 package com.talytica.survey.resources;
 
 import java.net.URI;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,14 +25,21 @@ import javax.ws.rs.core.Response.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.employmeo.data.model.AccountSurvey;
 import com.employmeo.data.model.Answer;
 import com.employmeo.data.model.Criterion;
 import com.employmeo.data.model.Grade;
 import com.employmeo.data.model.Grader;
+import com.employmeo.data.model.Person;
 import com.employmeo.data.model.Question;
+import com.employmeo.data.model.Respondant;
+import com.employmeo.data.model.SurveyQuestion;
 import com.employmeo.data.service.GraderService;
+import com.employmeo.data.service.PersonService;
 import com.employmeo.data.service.QuestionService;
 import com.employmeo.data.service.RespondantService;
+import com.talytica.survey.objects.NewGrader;
+import com.talytica.survey.objects.OrderAssessment;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +61,9 @@ public class GraderResource {
 	
 	@Autowired
 	RespondantService respondantService;
+
+	@Autowired
+	PersonService personService;
 	
 	@Autowired
 	QuestionService questionService;
@@ -140,10 +153,70 @@ public class GraderResource {
 			grader.setStatus(Grader.STATUS_COMPLETED);
 			Grader savedGrader = graderService.save(grader);
 			log.debug("Saved grader {}", savedGrader);
+			Respondant respondant = respondantService.getRespondantById(grader.getRespondantId());
+			if (respondant.getRespondantStatus() < Respondant.STATUS_UNGRADED) {
+				respondant.setRespondantStatus(Respondant.STATUS_UNGRADED);
+				respondantService.save(respondant);
+			} else if ((respondant.getRespondantStatus() < Respondant.STATUS_ADVUNGRADED) &&
+					(respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED)) {
+				respondant.setRespondantStatus(Respondant.STATUS_ADVUNGRADED);				
+				respondantService.save(respondant);
+			}
 			return Response.status(Status.CREATED).entity(savedGrader).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
 		}
+	}
+	
+	@POST
+	@Path("/new")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "Creates a new grader for a specified respondant", response = Respondant.class)
+	  @ApiResponses(value = {
+      @ApiResponse(code = 201, message = "Grader saved")})	
+	public Response newGrader(	
+	 @ApiParam("Assessment Order") NewGrader newGrader, @Context final HttpServletRequest reqt) {
+		Respondant resp = respondantService.getRespondant(newGrader.respondantUuid);
+
+		Person person = new Person();
+		person.setEmail(newGrader.email);
+		person.setFirstName(newGrader.fname);
+		person.setLastName(newGrader.lname);
+		person.setPhone(newGrader.phone);
+		Person savedPerson = personService.save(person);
+		Grader grader = new Grader();
+		grader.setType(Grader.TYPE_PERSON);
+		grader.setAccount(resp.getAccount());
+		grader.setAccountId(resp.getAccountId());
+		AccountSurvey aSurvey = resp.getAccountSurvey();
+		Set<SurveyQuestion> questions = aSurvey.getSurvey().getSurveyQuestions();
+
+		Optional<SurveyQuestion> question = questions.stream()
+          .filter(sq -> questionService.getQuestionById(sq.getQuestionId()).getScoringModel().equalsIgnoreCase("reference"))
+          .findFirst();
+
+		grader.setUserAgent(reqt.getHeader("User-Agent"));
+		grader.setIpAddress(reqt.getRemoteAddr());
+		
+		grader.setPerson(savedPerson);
+		grader.setPersonId(savedPerson.getId());
+		grader.setStatus(Grader.STATUS_STARTED);
+		
+		if(question.isPresent()) {
+			Question q = questionService.getQuestionById(question.get().getQuestionId());
+			grader.setQuestion(q);
+			grader.setQuestionId(q.getQuestionId());
+		}
+		grader.setRcConfig(aSurvey.getRcConfig());
+		grader.setRcConfigId(aSurvey.getRcConfigId());
+
+		grader.setRespondant(resp);
+		grader.setRespondantId(resp.getId());
+		
+		Grader savedGrader = graderService.save(grader);
+		
+		return Response.status(Status.CREATED).entity(savedGrader).build();
 	}
 	
 	@GET
@@ -162,6 +235,39 @@ public class GraderResource {
 			log.debug("Declined grader {}", savedGrader);
 		} 
 		return Response.seeOther(new URI("/thankyou.htm")).build();
+	}
+	
+	
+	@GET
+	@Path("/respondant/{uuid}")
+	@ApiOperation(value = "Gets the Respondant for a given Uuid", response = Respondant.class)
+	   @ApiResponses(value = {
+	     @ApiResponse(code = 200, message = "Respondant found"),
+	     @ApiResponse(code = 404, message = "Unable to associate this id with a candidate."),
+	     @ApiResponse(code = 410, message = "This respondant has enough completed references.")
+	   })
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRespondant(
+			@Context final HttpServletRequest reqt,
+			@ApiParam(value = "respondant uuid") @PathParam("uuid") @NotNull UUID uuid) {
+		log.debug("New Grader Requested respondant respondant by uuid {}", uuid);
+		
+		Respondant respondant = respondantService.getRespondant(uuid);
+		if (respondant != null) {
+			if ((respondant.getRespondantStatus() < Respondant.STATUS_SCORED) || 
+					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
+					(respondant.getRespondantStatus() < Respondant.STATUS_ADVSCORESADDED))) {
+				log.debug("Returning respondant {}", respondant);
+				return Response.status(Status.OK).entity(respondant).build();
+			} 
+			
+			return Response.status(Status.GONE).entity("This respondant has enough completed references.").build();
+
+		} else {
+			// TODO put in better error handling here.
+			log.debug("Respondant not found for uuid {}", uuid);
+			return Response.status(Status.NOT_FOUND).entity("Unable to associate this link with a candidate.").build();
+		}
 	}
 	
 	private String textByAnswer(Grade grade, Boolean forceResponse) {

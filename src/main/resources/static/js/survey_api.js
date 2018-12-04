@@ -16,6 +16,18 @@ function getRespondant(uuId) {
     });
 }
 
+function setUpNewGrader(uuId) {
+    return $.ajax({
+        type: "GET",
+        async: true,
+        url: servicePath + 'grader/respondant/'+uuId,
+        success: function(data) { 
+        	buildNewGraderView(data);
+        },
+        error: function(data) { showError(data); }
+    });
+}
+
 function getRespondantByPayrollId(id, asid) {
     return $.ajax({
         type: "GET",
@@ -230,6 +242,27 @@ function submitSurvey() {
       });	
 }
 
+function createGrader(newGrader) {
+    return $.ajax({
+        type: "POST",
+        async: true,
+        url: servicePath + 'grader/new',
+        data: JSON.stringify(newGrader),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
+        success: function(data) { 
+        	grader = data;
+        	grades = [];
+    		$.when(getCriteria(grader.uuId)).done(buildGraderPreamble);
+        },
+        error: function(data) { grader = null;showError(data); }
+    });
+}
+
 function getGrader(uuId) {
     return $.ajax({
         type: "GET",
@@ -241,8 +274,6 @@ function getGrader(uuId) {
         },
         error: function(data) { grader = null; showError(data); }
     });
-    
-
 }
 
 function getCriteria(uuId) {
