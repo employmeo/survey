@@ -256,6 +256,7 @@ function createGrader(newGrader) {
         },
         success: function(data) { 
         	grader = data;
+        	grades = [];
     		$.when(getCriteria(grader.uuId)).done(buildGraderPreamble);
         },
         error: function(data) { grader = null;showError(data); }
