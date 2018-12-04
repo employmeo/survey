@@ -186,6 +186,7 @@ public class GraderResource {
 		person.setPhone(newGrader.phone);
 		Person savedPerson = personService.save(person);
 		Grader grader = new Grader();
+		grader.setType(Grader.TYPE_PERSON);
 		grader.setAccount(resp.getAccount());
 		grader.setAccountId(resp.getAccountId());
 		AccountSurvey aSurvey = resp.getAccountSurvey();
