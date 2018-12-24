@@ -1207,6 +1207,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		namediv.append($('<input />', {
 			'class' : 'form-control',
 			'type' : 'text',
+			'autocapitalize' : 'words',
 			'name' : 'refName',
 			'id' : 'ref_name_'+question.questionId,
 			'onBlur' : 'checkReferenceInput(this.form)'}));
