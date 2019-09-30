@@ -319,9 +319,9 @@ public class TwilioResource {
 	private void nextQuestionTwiML(VoiceResponse.Builder twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
 	    SurveyQuestion nextQuestion = nextQuestion(respondant);
-        if (nextQuestion != null) {  
+        if (nextQuestion != null) {
 	        Say prompt = new Say.Builder("Question " + nextQuestion.getSequence() + ". ").build();
-	        twiML.say(prompt);
+	        if (nextQuestion.getQuestion().getDirection() <= 0) twiML.say(prompt);
 	        String media = nextQuestion.getQuestion().getQuestionMedia();
 	        if ((media != null) && (!media.isEmpty())) {
 	        	Play ques = new Play.Builder(media).build();
