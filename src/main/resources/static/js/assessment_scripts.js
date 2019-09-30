@@ -132,6 +132,39 @@ function splitReference(input) {
 	}
 }
 
+function checkReferenceSMSInput(form) {
+	var qid = $(form).attr('data-questionId');
+	var pagenum = $(form).attr('data-pagecount');
+	var phone = $('#ref_phone_'+qid).val();
+	var name = $('#ref_name_'+qid).val();
+	var hidden = $('#hiddentext_'+qid).val();
+	if (phone) {
+		if (!(/^\+?\d{2}[- ]?\d{3}[- ]?\d{5}$/.test(phone))) {
+			$('#phone_group_'+qid).addClass('has-error');
+		} else {
+			var combined = phone;
+			if (name) combined = name +' <'+phone+'>';
+			if (combined != hidden) {
+				$('#hiddentext_'+qid).val(combined);
+				submitPlainAnswer(form, pagenum);
+			}			
+		}
+	}
+}
+
+function splitSMSReference(input) {
+	var hidden = $(input).val();
+	var form = input.form;
+	var qid = $(form).attr('data-questionId');
+	var strings = hidden.split('<');
+	if (strings[1]) {
+		$('#ref_phone_'+qid).val(strings[1].substring(0, strings[1].length - 1));
+		$('#ref_name_'+qid).val(strings[0].substring(0, strings[0].length - 1));	
+	} else {
+		$('#ref_phone_'+qid).val(hidden);		
+	}
+}
+
 function submitPlainAnswer(form, pagenum) {
 	var fields = $(form).serializeArray();
 	var response = {};
@@ -1228,6 +1261,35 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		form.append(hidden);
 		form.append(namediv);
 		form.append(emaildiv);
+		if (question.question.questionType == 29) form.append(phonediv);
+		break;
+	case 29: // reference checker + sms option
+		var namediv = $('<div />', {'class' : 'form-control-group col-xs-6'});
+		namediv.append($('<label />',{'class':'control-label','text' : 'Full Name'}));
+		namediv.append($('<input />', {
+			'class' : 'form-control',
+			'type' : 'text',
+			'autocapitalize' : 'off',
+			'name' : 'refName',
+			'id' : 'ref_name_'+question.questionId,
+			'onBlur' : 'checkReferenceSMSInput(this.form)'}));
+		var phonediv = $('<div />', {'class' : 'form-control-group col-xs-6', 'id' : 'phone_group_'+question.questionId});
+		phonediv.append($('<label />',{'class':'control-label','text' : 'Mobile (w/ country)'}));
+		phonediv.append($('<input />', {
+			'class' : 'form-control',
+			'type' : 'text',
+			'name' : 'ref_phone',
+			'id' : 'ref_phone_'+question.questionId,
+			'onFocus' : '$("#phone_group_'+question.questionId+'").removeClass("has-feedback has-error");',
+			'onBlur' : 'checkReferenceSMSInput(this.form,'+pagecount+')'}));
+		var hidden =  $('<input />', {
+			'type' : 'hidden',
+			'name' : 'responseText',
+			'id' : 'hiddentext_'+question.questionId });
+		hidden.bind('update', function(e) {splitSMSReference(this);});
+		form.append(hidden);
+		form.append(namediv);
+		form.append(phonediv);
 		break;
 	case 21: // cognitive
 		answerwidth = 'col-xs-12'; // switch to full width
