@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 
 import com.employmeo.data.model.Respondant;
 import com.employmeo.data.service.RespondantService;
-
+import com.talytica.common.service.ServerAdminService;
 import com.talytica.survey.objects.SurveySubmission;
 
 import io.swagger.annotations.Api;
@@ -43,6 +43,9 @@ public class SubmitSurveyResource {
 	@Autowired
 	private RespondantService respondantService;
 
+	@Autowired
+	private ServerAdminService serverAdminService;
+	
 	@POST
 	@ApiOperation(value = "Gets the assessment for a given Uuid")
 	   @ApiResponses(value = {
@@ -65,11 +68,13 @@ public class SubmitSurveyResource {
 				log.info("Account: {} SURVEY COMPLETE for respondant id: {}",
 						respondant.getAccount().getAccountName(),
 						respondant.getId());
+				// serverAdminService.triggerPipeline("scoring");
 				return Response.status(Status.ACCEPTED).build();
 			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_ADVANCED) && 
 					(respondant.getRespondantStatus() < Respondant.STATUS_ADVCOMPLETED)) {
 				respondant.setRespondantStatus(Respondant.STATUS_ADVCOMPLETED);
 				respondantService.save(respondant);
+				// serverAdminService.triggerPipeline("scoring");
 				return Response.status(Status.ACCEPTED).build();
 			} else {
 				return Response.status(Status.NOT_MODIFIED).build();	

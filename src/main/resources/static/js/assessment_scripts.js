@@ -64,6 +64,12 @@ function launchApp() {
 
 	} else if (urlParams.newgraderUuid != null) {
 		setUpNewGrader(urlParams.newgraderUuid);
+	} else if (urlParams.fountainUrl != null) {
+		var fUrl = urlParams.fountainUrl;
+		var fountain = {};
+		fountain["fountainId"] = fUrl.substring(fUrl.indexOf('applications/')+13,fUrl.indexOf('/custom'));
+		fountain["redirectUrl"] = fUrl;
+		findFountainRespondant(fountain);
 	} else {
 		showError({"responseText" : "No ID Provided"});
 	}
