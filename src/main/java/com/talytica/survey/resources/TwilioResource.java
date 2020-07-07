@@ -316,9 +316,9 @@ public class TwilioResource {
 	    creator.setStatusCallbackMethod(HttpMethod.POST);
 	    creator.setStatusCallback(externalLinksService.getCallStatusLink());
 	    creator.setStatusCallbackEvent(params);
-	    // Only provide AMD for > $1000/mo
-	    if (null != respondant.getAccountSurvey().getPrice() && respondant.getAccountSurvey().getPrice() > 1000d) 
-	    	creator.setMachineDetection("Enable");
+	    // AMD would be cool - but nobody wants it.
+	    // if (null != respondant.getAccountSurvey().getPrice() && respondant.getAccountSurvey().getPrice() > 1000d) 
+	    //	creator.setMachineDetection("Enable");
 	    
 	    Call call = creator.create(client);			
 		log.debug("Outbound call id {}, made to {}",call.getSid(),request.phoneNumber);
