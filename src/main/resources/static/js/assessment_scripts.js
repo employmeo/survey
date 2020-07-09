@@ -1289,7 +1289,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		phonediv.append($('<label />',{'class':'control-label','text' : 'Mobile (w/ country)'}));
 		var phoneinput = $('<input />', {
 				'class' : 'form-control',
-				'type' : 'text',
+				'type' : 'tel',
 				'name' : 'ref_phone',
 				'id' : 'ref_phone_'+question.questionId,
 				'onFocus' : '$("#phone_group_'+question.questionId+'").removeClass("has-feedback has-error");',
