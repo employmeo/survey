@@ -64,6 +64,12 @@ function launchApp() {
 
 	} else if (urlParams.newgraderUuid != null) {
 		setUpNewGrader(urlParams.newgraderUuid);
+	} else if (urlParams.fountainUrl != null) {
+		var fUrl = urlParams.fountainUrl;
+		var fountain = {};
+		fountain["fountainId"] = fUrl.substring(fUrl.indexOf('applications/')+13,fUrl.indexOf('/custom'));
+		fountain["redirectUrl"] = fUrl;
+		findFountainRespondant(fountain);
 	} else {
 		showError({"responseText" : "No ID Provided"});
 	}
@@ -133,13 +139,19 @@ function splitReference(input) {
 }
 
 function checkReferenceSMSInput(form) {
+	// default us phone input mask
+	let mask = /^\+?\d{2}[- ]?\d{3}[- ]?\d{5}$/;
+	checkReferenceSMSInputWithMask(form, mask);
+}
+
+function checkReferenceSMSInputWithMask(form, mask) {
 	var qid = $(form).attr('data-questionId');
 	var pagenum = $(form).attr('data-pagecount');
 	var phone = $('#ref_phone_'+qid).val();
 	var name = $('#ref_name_'+qid).val();
 	var hidden = $('#hiddentext_'+qid).val();
 	if (phone) {
-		if (!(/^\+?\d{2}[- ]?\d{3}[- ]?\d{5}$/.test(phone))) {
+		if (!(mask.test(phone))) {
 			$('#phone_group_'+qid).addClass('has-error');
 		} else {
 			var combined = phone;
@@ -1275,13 +1287,18 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'onBlur' : 'checkReferenceSMSInput(this.form)'}));
 		var phonediv = $('<div />', {'class' : 'form-control-group col-xs-6', 'id' : 'phone_group_'+question.questionId});
 		phonediv.append($('<label />',{'class':'control-label','text' : 'Mobile (w/ country)'}));
-		phonediv.append($('<input />', {
-			'class' : 'form-control',
-			'type' : 'text',
-			'name' : 'ref_phone',
-			'id' : 'ref_phone_'+question.questionId,
-			'onFocus' : '$("#phone_group_'+question.questionId+'").removeClass("has-feedback has-error");',
-			'onBlur' : 'checkReferenceSMSInput(this.form,'+pagecount+')'}));
+		var phoneinput = $('<input />', {
+				'class' : 'form-control',
+				'type' : 'tel',
+				'name' : 'ref_phone',
+				'id' : 'ref_phone_'+question.questionId,
+				'onFocus' : '$("#phone_group_'+question.questionId+'").removeClass("has-feedback has-error");',
+				'onBlur' : 'checkReferenceSMSInput(this.form)'
+				});
+		if (question.question.questionMedia) $(phoneinput).attr(
+				'onBlur', 'checkReferenceSMSInputWithMask(this.form,new RegExp("'
+				+question.question.questionMedia+'"))');
+		phonediv.append(phoneinput);
 		var hidden =  $('<input />', {
 			'type' : 'hidden',
 			'name' : 'responseText',

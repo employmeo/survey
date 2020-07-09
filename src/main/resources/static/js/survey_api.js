@@ -61,6 +61,27 @@ function orderNewAssessment(order) {
     });
 }
 
+function findFountainRespondant(form) {
+    return $.ajax({
+        type: "POST",
+        async: true,
+        url: servicePath + 'respondant/fountain',
+        data: JSON.stringify(form),
+        contentType: "application/json",
+        headers : {
+		    'Content-Type': 'application/json',
+        	'charset':'UTF-8',
+        	'Accept': 'application/json'
+        },
+        success: function(data) { 
+        	respondant = data;
+        	getRespondantSurvey(respondant.respondantUuid);
+        	getResponses(respondant.respondantUuid);
+        },
+        error: function(data) {showError(data);}
+    });
+}
+
 function getAccountSurvey(asid, cb) {
     return $.ajax({
         type: "GET",

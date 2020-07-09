@@ -33,6 +33,7 @@ import com.employmeo.data.model.SurveyQuestion;
 import com.employmeo.data.service.AccountSurveyService;
 import com.employmeo.data.service.RespondantService;
 import com.talytica.common.service.ExternalLinksService;
+import com.talytica.common.service.ServerAdminService;
 import com.talytica.survey.objects.CallMeRequest;
 import com.twilio.Twilio;
 import com.twilio.http.HttpMethod;
@@ -89,6 +90,10 @@ public class TwilioResource {
 	
 	@Autowired
 	SimpMessagingTemplate simpMessagingTemplate;
+	
+	@Autowired
+	ServerAdminService serverAdminService;
+
 	
 	/*******************
 	 * For all voice data Collection using the Twilio API, the following
@@ -181,8 +186,9 @@ public class TwilioResource {
 	public String findSurvey(
 			@ApiParam(value = "Account Survey ID") @PathParam("asId") Long asId,
 			@ApiParam(value = "From") @QueryParam("From") String twiFrom,
-			@ApiParam(value = "Digits") @QueryParam("Digits") String twiDigits) {	
-		log.info("twilio requested findby id pathparam asid: {} queryparam digits: {}", asId, twiDigits);
+			@ApiParam(value = "Digits") @QueryParam("Digits") String twiDigits,
+			@ApiParam(value = "AnsweredBy") @QueryParam("AnsweredBy") String answeredBy) {	
+		log.info("twilio requested findby id pathparam asid: {} queryparam digits: {} and answeredBy {}", asId, twiDigits, answeredBy);
 		Respondant resp = respondantService.getRespondantByAccountSurveyIdAndPayrollId(asId, twiDigits);
 		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
 	    try {
@@ -192,17 +198,29 @@ public class TwilioResource {
 	    		} else {
 		    		AccountSurvey as = resp.getAccountSurvey();
 		    		String preambleMedia = as.getPreambleMedia();
-	
+		    		
 		    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
-			    	twiML.say(found);
+		    		// Using price to customize if we say "found user" - because Papa is only high priced customer who asked for this
+		    		if (null == as.getPrice() || as.getPrice() < 1000d) twiML.say(found);
 	
 		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
 		    			twiML.play(new Play.Builder(preambleMedia).build());
 		    		} else {
 		    			twiML.say(new Say.Builder(as.getPreambleText()).build());
 		    		}       	
-			    	
-		        	nextQuestionTwiML(twiML, resp);
+
+		    		// Check if answered by machine (in call-me situation)
+		    		if (answeredBy != null && !answeredBy.equalsIgnoreCase("human")) {
+		    	        Gather pressToContinue = new Gather.Builder()
+		    	        		.numDigits(1)
+		    	        		.say(new Say.Builder("Press 1 to Continue").build())
+		    	        		.action((BASE_SURVEY_URL + "/survey/1/twilio/nextquestion/" + resp.getId()))
+		    	        		.build();
+
+		    	    	twiML.gather(pressToContinue);		
+		    		} else {
+		    			nextQuestionTwiML(twiML, resp);
+		    		}
 	    		}
 	    	} else {
 	    		Play sorry = new Play.Builder(NO_MATCH_AUDIO).build();
@@ -298,6 +316,9 @@ public class TwilioResource {
 	    creator.setStatusCallbackMethod(HttpMethod.POST);
 	    creator.setStatusCallback(externalLinksService.getCallStatusLink());
 	    creator.setStatusCallbackEvent(params);
+	    // AMD would be cool - but nobody wants it.
+	    // if (null != respondant.getAccountSurvey().getPrice() && respondant.getAccountSurvey().getPrice() > 1000d) 
+	    //	creator.setMachineDetection("Enable");
 	    
 	    Call call = creator.create(client);			
 		log.debug("Outbound call id {}, made to {}",call.getSid(),request.phoneNumber);
@@ -315,7 +336,7 @@ public class TwilioResource {
 			@ApiParam(value = "CallStatus") @FormParam("CallStatus") String status)  {
 		simpMessagingTemplate.convertAndSend("/calls/"+callSid, status);
 	}
-	
+
 	private void nextQuestionTwiML(VoiceResponse.Builder twiML, Respondant respondant) throws TwiMLException {
 	    // get Survey Questions & sort
 	    SurveyQuestion nextQuestion = nextQuestion(respondant);
@@ -377,6 +398,7 @@ public class TwilioResource {
 				log.info("Account: {} VOICE SURVEY COMPLETE for respondant id: {}",
 						respondant.getAccount().getAccountName(),
 						respondant.getId());
+				//serverAdminService.triggerPipeline("scoring");
 			}
         }
 	}
