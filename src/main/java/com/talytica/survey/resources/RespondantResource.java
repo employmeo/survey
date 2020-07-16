@@ -89,9 +89,7 @@ public class RespondantResource {
 				
 			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) ||
 					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVCOMPLETED))) {
-				// TODO put in better error handling here.
-				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
+				return completedResponse(respondant);
 			}
 			log.debug("Returning respondant {}", respondant);
 			return Response.status(Status.OK).entity(respondant).build();
@@ -125,9 +123,7 @@ public class RespondantResource {
 				as = accountSurveyService.getAccountSurveyById(respondant.getSecondStageSurveyId());
 			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) ||
 					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVCOMPLETED))) {
-				// TODO put in better error handling here.
-				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
+				return completedResponse(respondant);
 			}
 		}
 		if (null != as) {
@@ -175,9 +171,7 @@ public class RespondantResource {
 				
 			} else if ((respondant.getRespondantStatus() >= Respondant.STATUS_COMPLETED) ||
 					((respondant.getRespondantStatus() >= Respondant.STATUS_ADVCOMPLETED))) {
-				// TODO put in better error handling here.
-				log.debug("Survey already completed for respondant {}", respondant);
-				return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
+				return completedResponse(respondant);
 			}
 			log.debug("Returning respondant {}", respondant);
 			return Response.status(Status.OK).entity(respondant).build();
@@ -187,4 +181,18 @@ public class RespondantResource {
 			return Response.status(Status.NOT_FOUND).entity("Unable to associate this link with an assessment.").build();
 		}
 	}
+
+	private Response completedResponse(Respondant respondant) {
+		log.debug("Survey already completed for respondant {}", respondant);
+		
+		String nextPage = respondant.getAccountSurvey().getRedirectPage();
+		if (null != respondant.getRedirectUrl()) nextPage = respondant.getRedirectUrl(); 
+		if (nextPage == null) return Response.status(Status.GONE).entity("This assessment has already been completed and submitted.").build();
+
+		return Response.status(Status.GONE)
+				.entity("This assessment has already been completed and submitted.")
+				.header("redirect", nextPage)
+				.build();
+	}
+	
 }
