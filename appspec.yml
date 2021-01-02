@@ -1,0 +1,21 @@
+version: 0.0
+os: linux
+files:
+  - source: /target/::JAR_FILE::
+    destination: /opt/talytica/application/install
+hooks:
+  AfterInstall:
+    - location: deploy/stop.sh
+      timeout: 300
+      runas: root
+    - location: deploy/deploy-latest.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: deploy/start.sh
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: deploy/validate.sh
+      timeout: 300
+      runas: root

@@ -1,0 +1,33 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      java: corretto8
+    commands:
+      - apt-get update -y
+      - apt-get install -y maven
+      - apt-get install -y awscli
+  build:
+    commands:
+      - persistence_version=$(awk -F'>' '{if ($0 ~ "<persistence-unit.version>") print $2 }' pom.xml | awk -F'<' '{print $1}')
+      - aws s3 cp s3://${CODE_PIPELINE_STORE}/artifacts/persistence-${persistence_version}.jar persistence-${persistence_version}.jar
+      - aws s3 cp s3://${CODE_PIPELINE_STORE}/artifacts/persistence-${persistence_version}.pom persistence-${persistence_version}.pom
+      - mkdir -p ~/.m2/repository/com/talytica/persistence/${persistence_version}
+      - mv *.pom *.jar ~/.m2/repository/com/talytica/persistence/${persistence_version}
+      - mkdir -p profile/${ENVIRONMENT}
+      - aws s3 cp s3://${CODE_PIPELINE_STORE}/${APP_NAME}/profile/${ENVIRONMENT}/database.properties profile/${ENVIRONMENT}/database.properties
+      - aws s3 cp s3://${CODE_PIPELINE_STORE}/${APP_NAME}/profile/${ENVIRONMENT}/application.properties profile/${ENVIRONMENT}/application.properties
+      - aws s3 cp s3://${CODE_PIPELINE_STORE}/${APP_NAME}/profile/${ENVIRONMENT}/logback.xml profile/${ENVIRONMENT}/logback.xml
+      - mvn clean package -P ${ENVIRONMENT} | tee mvn-output.txt
+      - app_name=$(awk '{ if ($2 == "Building") print $3 }' mvn-output.txt | grep -v jar)
+      - version=$(awk '{ if ($2 == "Building") print $4 }' mvn-output.txt | grep -v jar)
+      - artifact="${app_name}-${version}-${ENVIRONMENT}.jar"
+      - sed -i "s/::JAR_FILE::/${artifact}/g" appspec.yml
+      - ls -al target
+      - more appspec.yml
+      - ls -al deploy
+artifacts:
+  files:
+    - target/${artifact}
+    - appspec.yml
+    - deploy/*
