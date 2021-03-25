@@ -386,10 +386,13 @@ public class TwilioResource {
     	    twiML.play(goodbye);
         } else {   	
         	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
-        	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;
-	        Play goodbye = new Play.Builder(thankyouMedia).build();
-    	    twiML.play(goodbye);
-    	    
+        	if (null == thankyouMedia) {
+    			twiML.say(new Say.Builder(respondant.getAccountSurvey().getThankyouText()).build());        		
+        	} else {
+        		Play goodbye = new Play.Builder(thankyouMedia).build();
+        		twiML.play(goodbye);
+        	}
+        	
     	    // Submit the Survey
 			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
 				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
