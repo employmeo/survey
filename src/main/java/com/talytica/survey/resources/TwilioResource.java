@@ -43,6 +43,7 @@ import com.twilio.rest.api.v2010.account.CallCreator;
 import com.twilio.twiml.TwiMLException;
 import com.twilio.twiml.VoiceResponse;
 import com.twilio.twiml.voice.Gather;
+import com.twilio.twiml.voice.Pause;
 import com.twilio.twiml.voice.Play;
 import com.twilio.twiml.voice.Record;
 import com.twilio.twiml.voice.Redirect;
@@ -350,6 +351,7 @@ public class TwilioResource {
 	        } else {
 	        	Say ques = new Say.Builder(nextQuestion.getQuestion().getQuestionText()).build();
 	        	twiML.say(ques);
+	        	twiML.pause(new Pause.Builder().length(1).build());
 	        }
 	        
 	        
