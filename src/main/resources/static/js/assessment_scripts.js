@@ -154,8 +154,9 @@ function checkReferenceSMSInputWithMask(form, mask) {
 		if (!(mask.test(phone))) {
 			$('#phone_group_'+qid).addClass('has-error');
 		} else {
+			var prefix = ($('#ref_phone_prefix_'+qid).val());
 			var combined = phone;
-			if (name) combined = name +' <'+phone+'>';
+			if (name) combined = name +' <'+prefix+phone+'>';
 			if (combined != hidden) {
 				$('#hiddentext_'+qid).val(combined);
 				submitPlainAnswer(form, pagenum);
@@ -170,8 +171,10 @@ function splitSMSReference(input) {
 	var qid = $(form).attr('data-questionId');
 	var strings = hidden.split('<');
 	if (strings[1]) {
-		$('#ref_phone_'+qid).val(strings[1].substring(0, strings[1].length - 1));
-		$('#ref_name_'+qid).val(strings[0].substring(0, strings[0].length - 1));	
+		var prefix = $('#ref_phone_prefix_'+qid).val();
+		var fullphone = strings[1].substring(0, strings[1].length - 1);
+		$('#ref_phone_'+qid).val(fullphone.substring(prefix.length, fullphone.length - prefix.length));
+		$('#ref_name_'+qid).val(strings[0].substring(0, strings[0].length - 1));
 	} else {
 		$('#ref_phone_'+qid).val(hidden);		
 	}
@@ -310,7 +313,14 @@ function showError(data) {
 			'class' : 'col-xs-12 col-sm-12 col-md-12',
 			}).append($('<h3 />', { 'class' : 'text-center', 'text' : data.responseText})));
 		card.append(getHrDiv());
+		if (data.getResponseHeader('redirect')) {
+		card.append($('<div />', {
+			'class' : 'col-xs-12 col-sm-12 col-md-12 text-center',
+			}).append($('<a />', { 'class' : 'btn btn-info', 'text' : 'Continue', 'href' : data.getResponseHeader('redirect')})));
+		card.append(getHrDiv());
+		}
 		card.appendTo(deck);
+
 		$('#wait').addClass('hidden');
 }
 
@@ -349,7 +359,9 @@ function buildGraderPreamble() {
 		showError(data);
 		return;
 	}
-	$('#navtitle').text('Reference for ' + grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName);
+	$('#navtitle').text('Reference for ');
+	$('#surveyprogress').empty();
+	$('#surveyprogress').append($('<h3 />',{ text : grader.respondant.person.firstName + ' ' + grader.respondant.person.lastName}));
 	var deck = document.getElementById('wrapper');
 	$(deck).empty();
 	totalpages = 1;
@@ -1285,8 +1297,19 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 			'name' : 'refName',
 			'id' : 'ref_name_'+question.questionId,
 			'onBlur' : 'checkReferenceSMSInput(this.form)'}));
+		var prefix = (question.question.foreignId > 0) ? '+'+question.question.foreignId : '+1';
+		var hiddenprefix = $('<input />', {
+			'type' : 'hidden',
+			'id' : 'ref_phone_prefix_'+question.questionId,
+			'name' : 'ref_phone_prefix',
+			'value' : prefix
+		});
 		var phonediv = $('<div />', {'class' : 'form-control-group col-xs-6', 'id' : 'phone_group_'+question.questionId});
 		phonediv.append($('<label />',{'class':'control-label','text' : 'Mobile (w/ country)'}));
+		var phonegroup = $('<div />',{
+			'class' : 'input-group'
+		});
+		phonegroup.append($('<div />',{'class':'input-group-addon'}).append(prefix));
 		var phoneinput = $('<input />', {
 				'class' : 'form-control',
 				'type' : 'tel',
@@ -1298,13 +1321,15 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		if (question.question.questionMedia) $(phoneinput).attr(
 				'onBlur', 'checkReferenceSMSInputWithMask(this.form,new RegExp("'
 				+question.question.questionMedia+'"))');
-		phonediv.append(phoneinput);
+		phonegroup.append(phoneinput);
+		phonediv.append(phonegroup);
 		var hidden =  $('<input />', {
 			'type' : 'hidden',
 			'name' : 'responseText',
 			'id' : 'hiddentext_'+question.questionId });
 		hidden.bind('update', function(e) {splitSMSReference(this);});
 		form.append(hidden);
+		form.append(hiddenprefix);
 		form.append(namediv);
 		form.append(phonediv);
 		break;

@@ -43,6 +43,7 @@ import com.twilio.rest.api.v2010.account.CallCreator;
 import com.twilio.twiml.TwiMLException;
 import com.twilio.twiml.VoiceResponse;
 import com.twilio.twiml.voice.Gather;
+import com.twilio.twiml.voice.Pause;
 import com.twilio.twiml.voice.Play;
 import com.twilio.twiml.voice.Record;
 import com.twilio.twiml.voice.Redirect;
@@ -350,6 +351,7 @@ public class TwilioResource {
 	        } else {
 	        	Say ques = new Say.Builder(nextQuestion.getQuestion().getQuestionText()).build();
 	        	twiML.say(ques);
+	        	twiML.pause(new Pause.Builder().length(1).build());
 	        }
 	        
 	        
@@ -386,10 +388,13 @@ public class TwilioResource {
     	    twiML.play(goodbye);
         } else {   	
         	String thankyouMedia = respondant.getAccountSurvey().getThankyouMedia();
-        	if (null == thankyouMedia) thankyouMedia = GOODBYE_AUDIO;
-	        Play goodbye = new Play.Builder(thankyouMedia).build();
-    	    twiML.play(goodbye);
-    	    
+        	if (null == thankyouMedia) {
+    			twiML.say(new Say.Builder(respondant.getAccountSurvey().getThankyouText()).build());        		
+        	} else {
+        		Play goodbye = new Play.Builder(thankyouMedia).build();
+        		twiML.play(goodbye);
+        	}
+        	
     	    // Submit the Survey
 			if (respondant.getRespondantStatus() < Respondant.STATUS_COMPLETED) {
 				respondant.setRespondantStatus(Respondant.STATUS_COMPLETED);
