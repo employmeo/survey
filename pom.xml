@@ -12,7 +12,7 @@
 	<artifactId>survey</artifactId>
 	<name>survey</name>
 	<description>Talytica Survey API Components</description>
-	<version>0.0.45</version>
+	<version>0.0.46</version>
 	<packaging>jar</packaging>
 
 	<properties>
