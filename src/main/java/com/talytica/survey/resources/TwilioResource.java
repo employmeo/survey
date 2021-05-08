@@ -128,15 +128,27 @@ public class TwilioResource {
 			@ApiParam(value = "Digits") @FormParam("Digits") String digits,
 			@ApiParam(value = "RecordingUrl") @FormParam("RecordingUrl") String recUrl,
 			@ApiParam(value = "RecordingDuration") @FormParam("RecordingDuration") Integer recDuration) {
-		
+
+		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
+
 		log.debug("Twilio Capture Recording called by {} with {} for respondant {} and question {}", 
 				twiFrom, recUrl, respondantId, questionId);
 		
 		Respondant respondant = respondantService.getRespondantById(respondantId);
-		if ((recDuration <= DEFAULT_RECORDING_TIMEOUT)&&((null == digits)||(digits.isEmpty()))) {
+		AccountSurvey as = respondant.getAccountSurvey();
+		
+		// If customer has set a min response length, and the response is smaller then set to null;
+		if (((as.getMinResponseLength() != null && as.getMinResponseLength() > 0)) && recDuration < as.getMinResponseLength()) {
+			log.debug("Short recording ({} seconds vs {}) recording: {}", recDuration, as.getMinResponseLength(), recUrl);
+			recUrl = null; // don't accept
+		}
+
+		// If candidate is getting called by service & not calling in, also ignore recordings < 10 seconds
+		if ((recDuration <= DEFAULT_RECORDING_TIMEOUT) && ((null == digits)||(digits.isEmpty()))) {
 			log.debug("Empty ({} second) recording: {}", recDuration, recUrl);
 			recUrl = null; // don't accept
 		}
+		
 		if ((questionId != null) && (recUrl != null)) {
 			// Save the response
 			Response recording = new Response();
@@ -146,10 +158,16 @@ public class TwilioResource {
 			recording.setResponseValue(recDuration);
 			recording.setQuestionId(questionId);
 			respondantService.saveResponse(recording);
+		} else if (recUrl == null) {
+			// play a message saying sorry, we didn't get that, unless no message created
+			if (as.getTooShortMedia() != null) {
+				twiML.play(new Play.Builder(as.getTooShortMedia()).build());
+			} else if (as.getTooShortText() != null) {
+				twiML.say(new Say.Builder(as.getTooShortText()).build());
+			}
 		}
 
 		// present the next question		
-		VoiceResponse.Builder twiML = new VoiceResponse.Builder();
 		try {
 			nextQuestionTwiML(twiML, respondant);
 		} catch (TwiMLException e) {
@@ -175,7 +193,7 @@ public class TwilioResource {
 			e.printStackTrace();
 		}
 		
-		log.debug("Twilio Capture Recording returned {}", twiML.build().toXml());
+		log.debug("Next Twilio Question returned {}", twiML.build().toXml());
 		return twiML.build().toXml();
 		
 	}
@@ -200,9 +218,10 @@ public class TwilioResource {
 		    		AccountSurvey as = resp.getAccountSurvey();
 		    		String preambleMedia = as.getPreambleMedia();
 		    		
-		    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
-		    		// Using price to customize if we say "found user" - because Papa is only high priced customer who asked for this
-		    		if (null == as.getPrice() || as.getPrice() < 1000d) twiML.say(found);
+		    		if (as.getConfirmUser()) {
+			    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
+		    			twiML.say(found);
+		    		}
 	
 		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
 		    			twiML.play(new Play.Builder(preambleMedia).build());
@@ -262,8 +281,10 @@ public class TwilioResource {
 		    		AccountSurvey as = resp.getAccountSurvey();
 		    		String preambleMedia = as.getPreambleMedia();
 	
-		    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
-			    	twiML.say(found);
+		    		if (as.getConfirmUser()) {
+			    		Say found = new Say.Builder("Found: " + resp.getPerson().getFirstName() + " " + resp.getPerson().getLastName() + "." ).build();
+		    			twiML.say(found);
+		    		}
 	
 		    		if ((preambleMedia != null) && (!preambleMedia.isEmpty())) {
 		    			twiML.play(new Play.Builder(preambleMedia).build());
