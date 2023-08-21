@@ -193,7 +193,7 @@ function submitPlainAnswer(form, pagenum) {
 		});
 	} else if(grader) {
 		var criterion = getCriteriaForQid(response.questionId);
-		if (response.responseValue != null && criterion.question.questionType == 4 && $('#star-5-na-' + response.questionId).prop('checked')) {
+		if (criterion.question.foreignId != null && response.responseValue != null && criterion.question.questionType == 4 && $('#star-5-na-' + response.questionId).prop('checked')) {
 			$('#star-5-na-' + response.questionId).prop('checked', false);
 		}
 		// if question is type 4 and value is less than or equal to 6, set next question required true + unset if value is > 6
@@ -223,7 +223,7 @@ function submitNA(form, pagenum) {
 }
 
 function changeRequirementLowRating(criterion, response) {
-	if (criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
+	if (criterion.question.foreignId != null && criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
 		if (response.responseValue <= 6 || response.responseValue == null) {
 			criteria[criterion.sequence].required = true;
 			$('#quesrow_'+criteria[criterion.sequence].questionId).addClass("required");
@@ -994,52 +994,58 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	}));
 	if (question.required) form.addClass('required');
 	switch (question.question.questionType) {
-	case 1: // multiple choice (checkbox)
-		break;
-	case 2: // Thumbs
-		var ansdiv = $('<div />', {'class' : 'form-group'});
-		var like = $('<div />', {'class' : 'col-xs-6 text-center'});
-		var radioLike =	$('<input />', {
-			'id'   : 'radiobox-' + question.questionId +"-1",
-			'type' : 'radio', 'class' : 'thumbs-up',
-			'name': "responseValue",
-			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '10'});
-		like.append(radioLike);
-		like.append($('<label />', {
-			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'thumbs-up' }));
-		var dislike = $('<div />', {'class' : 'col-xs-6 text-center'});
-		var radioDislike =$('<input />', {
-			'id'   : 'radiobox-' + question.questionId +"-2",
-			'type' : 'radio', 'class' : 'thumbs-down', 
-			'name': "responseValue",
-			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '0'});
-		dislike.append(radioDislike);
-		dislike.append($('<label />', {
-			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'thumbs-down' }));
-		ansdiv.append(like);
-		ansdiv.append(dislike);
-		ansdiv.append($('<div />', {'class' : 'clearfix'}));
-		form.append(ansdiv);
-		break;
-	case 3: // Schedule
-		break; // above not used
-	case 4: // Likert (5 Stars)
-		var ansdiv = $('<div />', {'class' : 'form-group'});
-		ansdiv.addClass('stars');
-		ansdiv.append($('<input/>',{
-			'class' : 'na',
-			'id': 'star-5-na' + '-' + question.questionId,
-			'name': "responseText",
-			'type': 'radio',
-			'onChange' : 'submitNA(this.form,'+pagecount+')',
-			'text' : 'N/A',
-		}));
-		ansdiv.append($('<label />',{
-			'class' : 'na',
-			'for' : 'star-5-na' + '-' + question.questionId,
-		}));
+		case 1: // multiple choice (checkbox)
+			break;
+		case 2: // Thumbs
+			var ansdiv = $('<div />', {'class': 'form-group'});
+			var like = $('<div />', {'class': 'col-xs-6 text-center'});
+			var radioLike = $('<input />', {
+				'id': 'radiobox-' + question.questionId + "-1",
+				'type': 'radio', 'class': 'thumbs-up',
+				'name': "responseValue",
+				'onChange': 'submitPlainAnswer(this.form,' + pagecount + ')',
+				'value': '10'
+			});
+			like.append(radioLike);
+			like.append($('<label />', {
+				'for': 'radiobox-' + question.questionId + "-1", 'class': 'thumbs-up'
+			}));
+			var dislike = $('<div />', {'class': 'col-xs-6 text-center'});
+			var radioDislike = $('<input />', {
+				'id': 'radiobox-' + question.questionId + "-2",
+				'type': 'radio', 'class': 'thumbs-down',
+				'name': "responseValue",
+				'onChange': 'submitPlainAnswer(this.form,' + pagecount + ')',
+				'value': '0'
+			});
+			dislike.append(radioDislike);
+			dislike.append($('<label />', {
+				'for': 'radiobox-' + question.questionId + "-2", 'class': 'thumbs-down'
+			}));
+			ansdiv.append(like);
+			ansdiv.append(dislike);
+			ansdiv.append($('<div />', {'class': 'clearfix'}));
+			form.append(ansdiv);
+			break;
+		case 3: // Schedule
+			break; // above not used
+		case 4: // Likert (5 Stars)
+			var ansdiv = $('<div />', {'class': 'form-group'});
+			ansdiv.addClass('stars');
+			if (question.foreignId != null) {
+				ansdiv.append($('<input/>', {
+					'class': 'na',
+					'id': 'star-5-na' + '-' + question.questionId,
+					'name': "responseText",
+					'type': 'radio',
+					'onChange': 'submitNA(this.form,' + pagecount + ')',
+					'text': 'N/A',
+				}));
+				ansdiv.append($('<label />', {
+					'class': 'na',
+					'for': 'star-5-na' + '-' + question.questionId,
+				}));
+			}
 		for (var i=5;i>0;i--) {
 			var ans = 2 * i;
 			if (question.direction < 0) ans = 12 - 2* i;
