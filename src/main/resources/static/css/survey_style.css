@@ -362,7 +362,35 @@ label.star:before {
   content: '\f006';
   font-family: FontAwesome;
 }
-
+/**
+ * 4.2.5 NA
+ * ----------------------------------------------------------------------------
+ */
+input.na { display: none; }
+label.na {
+    float: right;
+    font-family: FontAwesome;
+    padding: 7px;
+    padding-font: 43px;
+    font-size: 32px;
+    color: #444;
+    transition: all .2s;
+}
+input.na:checked ~ label.na:before {
+    content: '\f05e';
+    color: #FF0000;
+    text-shadow: 0 0 8px #FF9999;
+    transition: all .25s;
+}
+label.na:hover {
+    color: #FF0000;
+    text-shadow: 0 0 8px #FF9999;
+    transform: scale(1.1);
+}
+label.na:before {
+    content: '\f05e';
+    font-family: FontAwesome;
+}
 /**
  * 4.3 Thumbs up/down
  * ----------------------------------------------------------------------------
