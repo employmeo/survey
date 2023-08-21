@@ -193,10 +193,44 @@ function submitPlainAnswer(form, pagenum) {
 		});
 	} else if(grader) {
 		var criterion = getCriteriaForQid(response.questionId);
+		if (response.responseValue != null && criterion.question.questionType == 4 && $('#star-5-na-' + response.questionId).prop('checked')) {
+			$('#star-5-na-' + response.questionId).prop('checked', false);
+		}
+		// if question is type 4 and value is less than or equal to 6, set next question required true + unset if value is > 6
+		changeRequirementLowRating(criterion,response);
 		sendGrade(criterion, response, function(data) {
 			saveGrade(data);
 			isPageComplete(1);
 		});
+	}
+}
+
+function submitNA(form, pagenum) {
+	var fields = $(form).serializeArray();
+	var response = {};
+	for (var i=0;i<fields.length;i++) {
+		response[fields[i].name] = fields[i].value;
+	}
+	if (respondant) {
+		sendResponse(response, function(data) {
+			saveResponse(data);
+			isPageComplete(pagenum);
+		});
+	} else if(grader) {
+		$('#star-' + response.responseValue / 2 + '-' + response.questionId).prop('checked', false);
+		submitPlainAnswer(form, pagenum);
+	}
+}
+
+function changeRequirementLowRating(criterion, response) {
+	if (criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
+		if (response.responseValue <= 6 || response.responseValue == null) {
+			criteria[criterion.sequence].required = true;
+			$('#quesrow_'+criteria[criterion.sequence].questionId).addClass("required");
+		} else {
+			criteria[criterion.sequence].required = false;
+			$('#quesrow_'+criteria[criterion.sequence].questionId).removeClass("required");
+		}
 	}
 }
 
@@ -429,6 +463,17 @@ function buildGraderForm() {
 	if (grades != null) {
 		for (var i=0;i<grades.length;i++) {
 			saveGrade(grades[i]);
+			var criterion = getCriteriaForQid(grades[i].questionId);
+			if (criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
+				console.log("is question 4, and next is 27");
+				if (grades[i].gradeValue <= 6) {
+					criteria[criterion.sequence].required = true;
+					$('#quesrow_' + criteria[criterion.sequence].questionId).addClass("required");
+				} else {
+					criteria[criterion.sequence].required = false;
+					$('#quesrow_' + criteria[criterion.sequence].questionId).removeClass("required");
+				}
+			}
 			    if (grades[i].gradeValue) {
 				    var radios =$('form[name=question_'+grades[i].questionId+
 	    		    '] :input[type=radio][name=responseValue][value=' + grades[i].gradeValue + ']');
@@ -983,6 +1028,18 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	case 4: // Likert (5 Stars)
 		var ansdiv = $('<div />', {'class' : 'form-group'});
 		ansdiv.addClass('stars');
+		ansdiv.append($('<input/>',{
+			'class' : 'na',
+			'id': 'star-5-na' + '-' + question.questionId,
+			'name': "responseText",
+			'type': 'radio',
+			'onChange' : 'submitNA(this.form,'+pagecount+')',
+			'text' : 'N/A',
+		}));
+		ansdiv.append($('<label />',{
+			'class' : 'na',
+			'for' : 'star-5-na' + '-' + question.questionId,
+		}));
 		for (var i=5;i>0;i--) {
 			var ans = 2 * i;
 			if (question.direction < 0) ans = 12 - 2* i;
