@@ -48,7 +48,7 @@
 	z-index: 2;
 	opacity: 0.75; -moz-opacity: 0.75; -webkit-opacity: 0.75; filter: alpha(opacity=85); -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=85)";
 }	
-.qpanel .qpanel-header h4, .qpanel .qpanel-body h4, .qpanel .qpanel-footer h4 { display: inline; font-family: Verdana,Arial,sans-serif; font-size: 30px; color: #34495e margin: 0 !important; padding: 0 !important; }
+.qpanel .qpanel-header h4, .qpanel .qpanel-body h4, .qpanel .qpanel-footer h4 { display: inline; font-family: Verdana,Arial,sans-serif; font-size: 30px; color: #34495e; margin: 0 !important; padding: 0 !important; }
 .qpanel .qpanel-header div, .qpanel .qpanel-body div, .qpanel .qpanel-footer div { display: inline; font-family: Verdana,Arial,sans-serif; font-size: 36px; color: #34495e; text-align: center; background-color: transparent !important; border: none !important; }	
 .qpanel .qpanel-header { top: 0; }
 .qpanel .qpanel-body { top: auto; bottom: auto; }
@@ -333,7 +333,7 @@ label.likertbox:hover {
  * ----------------------------------------------------------------------------
  */
 div.stars {
-    width: 230px;
+    width: 300px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -362,6 +362,7 @@ label.star:before {
   content: '\f006';
   font-family: FontAwesome;
 }
+
 /**
  * 4.2.5 NA
  * ----------------------------------------------------------------------------
