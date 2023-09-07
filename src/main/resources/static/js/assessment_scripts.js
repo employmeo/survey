@@ -1032,7 +1032,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 		case 4: // Likert (5 Stars)
 			var ansdiv = $('<div />', {'class': 'form-group'});
 			ansdiv.addClass('stars');
-			if (question.foreignId != null) {
+			if (question.question.foreignId != null && grader) {
 				ansdiv.append($('<input/>', {
 					'class': 'na',
 					'id': 'star-5-na' + '-' + question.questionId,
