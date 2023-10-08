@@ -196,6 +196,13 @@ function submitPlainAnswer(form, pagenum) {
 		if (criterion.question.foreignId != null && response.responseValue != null && criterion.question.questionType == 4 && $('#star-5-na-' + response.questionId).prop('checked')) {
 			$('#star-5-na-' + response.questionId).prop('checked', false);
 		}
+		if (criterion.question.foreignId != null && response.responseValue != null && criterion.question.questionType == 12) {
+			if (criterion.question.answers[response.responseValue-1].answerText == "Other") {
+				$('#quesrow_'+criterion.question.foreignId).addClass("required");
+			} else {
+				$('#quesrow_'+criterion.question.foreignId).removeClass("required");
+			}
+		}
 		// if question is type 4 and value is less than or equal to 6, set next question required true + unset if value is > 6
 		changeRequirementLowRating(criterion,response);
 		sendGrade(criterion, response, function(data) {
@@ -226,10 +233,10 @@ function changeRequirementLowRating(criterion, response) {
 	if (criterion.question.foreignId != null && criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
 		if (response.responseValue <= 6 || response.responseValue == null) {
 			criteria[criterion.sequence].required = true;
-			$('#quesrow_'+criteria[criterion.sequence].questionId).addClass("required");
+			$('#quesrow_'+criterion.question.foreignId).addClass("required");
 		} else {
 			criteria[criterion.sequence].required = false;
-			$('#quesrow_'+criteria[criterion.sequence].questionId).removeClass("required");
+			$('#quesrow_'+criterion.question.foreignId).removeClass("required");
 		}
 	}
 }
@@ -465,13 +472,19 @@ function buildGraderForm() {
 			saveGrade(grades[i]);
 			var criterion = getCriteriaForQid(grades[i].questionId);
 			if (criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
-				console.log("is question 4, and next is 27");
 				if (grades[i].gradeValue <= 6) {
 					criteria[criterion.sequence].required = true;
-					$('#quesrow_' + criteria[criterion.sequence].questionId).addClass("required");
+					$('#quesrow_' + criterion.question.foreignId).addClass("required");
 				} else {
 					criteria[criterion.sequence].required = false;
-					$('#quesrow_' + criteria[criterion.sequence].questionId).removeClass("required");
+					$('#quesrow_' + criterion.question.foreignId).removeClass("required");
+				}
+			}
+			if (criterion.question.foreignId != null && grades[i].gradeValue != null && criterion.question.questionType == 12) {
+				if (criterion.question.answers[grades[i].gradeValue-1].answerText == "Other") {
+					$('#quesrow_'+criterion.question.foreignId).addClass("required");
+				} else {
+					$('#quesrow_'+criterion.question.foreignId).removeClass("required");
 				}
 			}
 			    if (grades[i].gradeValue) {
@@ -1595,7 +1608,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'class' : 'radio-select',
 				'name' : 'responseValue',
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value' :  answer.answerValue
+				'value' :  answer.answerValue,
 			});
 
 			form.append(radiobox);
