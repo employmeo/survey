@@ -370,9 +370,7 @@ label.star:before {
 input.na { display: none; }
 label.na {
     float: right;
-    font-family: SansSerif;
-    padding: 7px;
-    padding-font: 43px;
+    padding: 3px 0px 3px 15px;
     font-size: 32px;
     color: #444;
     transition: all .2s;
@@ -393,10 +391,11 @@ label.na:hover {
 label.na:before {
     content: 'N/A';
     font-family: Verdana;
-    font-size: 24px;
-    padding: 3px;
-    border: #444 3px solid;
-    border-radius: 10px;
+    font-size: 18px;
+    font-weight: normal;
+    padding: 4px;
+    border: #444 1px solid;
+    border-radius: 7px;
 }
 /**
  * 4.3 Thumbs up/down
