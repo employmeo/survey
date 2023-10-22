@@ -193,10 +193,51 @@ function submitPlainAnswer(form, pagenum) {
 		});
 	} else if(grader) {
 		var criterion = getCriteriaForQid(response.questionId);
+		if (criterion.question.foreignId != null && response.responseValue != null && criterion.question.questionType == 4 && $('#star-5-na-' + response.questionId).prop('checked')) {
+			$('#star-5-na-' + response.questionId).prop('checked', false);
+		}
+		if (criterion.question.foreignId != null && response.responseValue != null && criterion.question.questionType == 12) {
+			if (criterion.question.answers[response.responseValue-1].answerText == "Other") {
+				$('#quesrow_'+criterion.question.foreignId).addClass("required");
+			} else {
+				$('#quesrow_'+criterion.question.foreignId).removeClass("required");
+			}
+		}
+		// if question is type 4 and value is less than or equal to 6, set next question required true + unset if value is > 6
+		changeRequirementLowRating(criterion,response);
 		sendGrade(criterion, response, function(data) {
 			saveGrade(data);
 			isPageComplete(1);
 		});
+	}
+}
+
+function submitNA(form, pagenum) {
+	var fields = $(form).serializeArray();
+	var response = {};
+	for (var i=0;i<fields.length;i++) {
+		response[fields[i].name] = fields[i].value;
+	}
+	if (respondant) {
+		sendResponse(response, function(data) {
+			saveResponse(data);
+			isPageComplete(pagenum);
+		});
+	} else if(grader) {
+		$('#star-' + response.responseValue / 2 + '-' + response.questionId).prop('checked', false);
+		submitPlainAnswer(form, pagenum);
+	}
+}
+
+function changeRequirementLowRating(criterion, response) {
+	if (criterion.question.foreignId != null && criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
+		if (response.responseValue <= 6 || response.responseValue == null) {
+			criteria[criterion.sequence].required = true;
+			$('#quesrow_'+criterion.question.foreignId).addClass("required");
+		} else {
+			criteria[criterion.sequence].required = false;
+			$('#quesrow_'+criterion.question.foreignId).removeClass("required");
+		}
 	}
 }
 
@@ -429,6 +470,23 @@ function buildGraderForm() {
 	if (grades != null) {
 		for (var i=0;i<grades.length;i++) {
 			saveGrade(grades[i]);
+			var criterion = getCriteriaForQid(grades[i].questionId);
+			if (criterion.question.questionType == 4 && criteria[criterion.sequence].question.questionType == 27) {
+				if (grades[i].gradeValue <= 6) {
+					criteria[criterion.sequence].required = true;
+					$('#quesrow_' + criterion.question.foreignId).addClass("required");
+				} else {
+					criteria[criterion.sequence].required = false;
+					$('#quesrow_' + criterion.question.foreignId).removeClass("required");
+				}
+			}
+			if (criterion.question.foreignId != null && grades[i].gradeValue != null && criterion.question.questionType == 12) {
+				if (criterion.question.answers[grades[i].gradeValue-1].answerText == "Other") {
+					$('#quesrow_'+criterion.question.foreignId).addClass("required");
+				} else {
+					$('#quesrow_'+criterion.question.foreignId).removeClass("required");
+				}
+			}
 			    if (grades[i].gradeValue) {
 				    var radios =$('form[name=question_'+grades[i].questionId+
 	    		    '] :input[type=radio][name=responseValue][value=' + grades[i].gradeValue + ']');
@@ -949,40 +1007,58 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 	}));
 	if (question.required) form.addClass('required');
 	switch (question.question.questionType) {
-	case 1: // multiple choice (checkbox)
-		break;
-	case 2: // Thumbs
-		var ansdiv = $('<div />', {'class' : 'form-group'});
-		var like = $('<div />', {'class' : 'col-xs-6 text-center'});
-		var radioLike =	$('<input />', {
-			'id'   : 'radiobox-' + question.questionId +"-1",
-			'type' : 'radio', 'class' : 'thumbs-up',
-			'name': "responseValue",
-			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '10'});
-		like.append(radioLike);
-		like.append($('<label />', {
-			'for'   : 'radiobox-' + question.questionId +"-1", 'class' : 'thumbs-up' }));
-		var dislike = $('<div />', {'class' : 'col-xs-6 text-center'});
-		var radioDislike =$('<input />', {
-			'id'   : 'radiobox-' + question.questionId +"-2",
-			'type' : 'radio', 'class' : 'thumbs-down', 
-			'name': "responseValue",
-			'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-			'value' :  '0'});
-		dislike.append(radioDislike);
-		dislike.append($('<label />', {
-			'for'   : 'radiobox-' + question.questionId +"-2", 'class' : 'thumbs-down' }));
-		ansdiv.append(like);
-		ansdiv.append(dislike);
-		ansdiv.append($('<div />', {'class' : 'clearfix'}));
-		form.append(ansdiv);
-		break;
-	case 3: // Schedule
-		break; // above not used
-	case 4: // Likert (5 Stars)
-		var ansdiv = $('<div />', {'class' : 'form-group'});
-		ansdiv.addClass('stars');
+		case 1: // multiple choice (checkbox)
+			break;
+		case 2: // Thumbs
+			var ansdiv = $('<div />', {'class': 'form-group'});
+			var like = $('<div />', {'class': 'col-xs-6 text-center'});
+			var radioLike = $('<input />', {
+				'id': 'radiobox-' + question.questionId + "-1",
+				'type': 'radio', 'class': 'thumbs-up',
+				'name': "responseValue",
+				'onChange': 'submitPlainAnswer(this.form,' + pagecount + ')',
+				'value': '10'
+			});
+			like.append(radioLike);
+			like.append($('<label />', {
+				'for': 'radiobox-' + question.questionId + "-1", 'class': 'thumbs-up'
+			}));
+			var dislike = $('<div />', {'class': 'col-xs-6 text-center'});
+			var radioDislike = $('<input />', {
+				'id': 'radiobox-' + question.questionId + "-2",
+				'type': 'radio', 'class': 'thumbs-down',
+				'name': "responseValue",
+				'onChange': 'submitPlainAnswer(this.form,' + pagecount + ')',
+				'value': '0'
+			});
+			dislike.append(radioDislike);
+			dislike.append($('<label />', {
+				'for': 'radiobox-' + question.questionId + "-2", 'class': 'thumbs-down'
+			}));
+			ansdiv.append(like);
+			ansdiv.append(dislike);
+			ansdiv.append($('<div />', {'class': 'clearfix'}));
+			form.append(ansdiv);
+			break;
+		case 3: // Schedule
+			break; // above not used
+		case 4: // Likert (5 Stars)
+			var ansdiv = $('<div />', {'class': 'form-group'});
+			ansdiv.addClass('stars');
+			if (question.question.foreignId != null && grader) {
+				ansdiv.append($('<input/>', {
+					'class': 'na',
+					'id': 'star-5-na' + '-' + question.questionId,
+					'name': "responseText",
+					'type': 'radio',
+					'onChange': 'submitNA(this.form,' + pagecount + ')',
+					'text': 'N/A',
+				}));
+				ansdiv.append($('<label />', {
+					'class': 'na',
+					'for': 'star-5-na' + '-' + question.questionId,
+				}));
+			}
 		for (var i=5;i>0;i--) {
 			var ans = 2 * i;
 			if (question.direction < 0) ans = 12 - 2* i;
@@ -1532,7 +1608,7 @@ function getPlainResponseForm(question, respondant, qcount, pagecount) {
 				'class' : 'radio-select',
 				'name' : 'responseValue',
 				'onChange' : 'submitPlainAnswer(this.form,'+pagecount+')',
-				'value' :  answer.answerValue
+				'value' :  answer.answerValue,
 			});
 
 			form.append(radiobox);
